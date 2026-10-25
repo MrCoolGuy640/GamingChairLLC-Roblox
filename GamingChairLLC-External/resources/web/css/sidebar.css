@@ -1,0 +1,70 @@
+/* ---------------------------------------------
+   Sidebar
+--------------------------------------------- */
+.sidebar {
+  position: relative;
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  padding: 12px 10px 10px;
+  gap: 4px;
+  overflow-y: auto;
+  transition: width 0.16s ease, padding 0.16s ease;
+}
+
+.sidebar-collapse {
+  align-self: flex-end;
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--text-2);
+  border-radius: 5px; margin-bottom: 6px;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.16s ease;
+}
+.sidebar-collapse svg { width: 13px; height: 13px; }
+.sidebar-collapse:hover { background: var(--bg-3); color: var(--text-0); }
+
+.sidebar.is-collapsed { width: 56px; padding-left: 8px; padding-right: 8px; }
+.sidebar.is-collapsed .sidebar-collapse { transform: rotate(180deg); align-self: center; }
+.sidebar.is-collapsed .nav-item span { display: none; }
+.sidebar.is-collapsed .nav-item { justify-content: center; padding: 9px 0; }
+
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 11px; border: none; background: transparent;
+  color: var(--text-1); border-radius: var(--radius-sm);
+  font-size: 12.5px; font-weight: 550; text-align: left;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.nav-item:hover { background: var(--bg-2); color: var(--text-0); }
+.nav-item.is-active { background: var(--white-fill); color: var(--white-fill-text); }
+.nav-item.is-active .nav-icon { color: var(--white-fill-text); }
+
+.nav-icon { width: 15px; height: 15px; flex-shrink: 0; color: var(--text-2); transition: color 0.14s ease; }
+
+.nav-spacer { flex: 1; }
+
+/* Attach button, pinned to the bottom of the sidebar */
+.attach-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  padding: 9px 11px; border: none;
+  background: var(--white-fill); color: var(--white-fill-text);
+  border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 650;
+  flex-shrink: 0;
+  transition: filter 0.12s ease, transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
+}
+.attach-btn:hover { filter: brightness(0.94); }
+.attach-btn:active { transform: translateY(1px); }
+.attach-btn.is-attached {
+  background: var(--bg-3); color: var(--live);
+  border: 1px solid rgba(61, 220, 132, 0.3);
+  filter: none;
+}
+.btn-icon { width: 13px; height: 13px; flex-shrink: 0; }
+
+.sidebar.is-collapsed .attach-btn { padding: 9px 0; }
+.sidebar.is-collapsed .attach-btn span { display: none; }

@@ -1,0 +1,42 @@
+[package]
+name = "gamingchairllc"
+version = "0.1.0"
+edition = "2021"
+description = "GamingChairLLC external tool"
+build = false
+
+[[bin]]
+name = "GamingChairLLC"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+chrono = "0.4"
+log = { version = "0.4", features = ["std"] }
+parking_lot = "0.12"
+# HTTP/2 is deliberately left out: the offsets host speaks HTTP/1.1 and this
+# keeps the dependency tree (and binary) considerably smaller.
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "json",
+    "native-tls",
+] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tao = "0.37.1"
+tiny_http = "0.12"
+windows-sys = { version = "0.60.2", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_Media",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Threading",
+    "Win32_UI_WindowsAndMessaging",
+] }
+wry = { version = "0.57.0", default-features = false }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true

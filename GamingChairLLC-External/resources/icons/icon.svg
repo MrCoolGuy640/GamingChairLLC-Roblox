@@ -1,0 +1,35 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="96" fill="#111111"/>
+
+  <g transform="rotate(14 256 256)">
+    <!-- Outer diamond/window -->
+    <rect
+      x="96"
+      y="96"
+      width="320"
+      height="320"
+      rx="8"
+      fill="#F2F2F2"
+    />
+
+    <!-- Perfectly centered cutout -->
+    <rect
+      x="176"
+      y="176"
+      width="160"
+      height="160"
+      rx="4"
+      fill="#111111"
+    />
+
+    <!-- Center diamond -->
+    <rect
+      x="216"
+      y="216"
+      width="80"
+      height="80"
+      rx="2"
+      fill="#F2F2F2"
+    />
+  </g>
+</svg>

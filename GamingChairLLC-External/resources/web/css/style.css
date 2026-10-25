@@ -1,0 +1,10 @@
+/* Entry point — imports all stylesheets in cascade order.
+   Split by concern: keep new rules in the matching file below
+   rather than growing this one. */
+@import "base.css";
+@import "main.css";
+@import "sidebar.css";
+@import "content.css";
+@import "settings.css";
+@import "explorer.css";
+@import "statusbar.css";

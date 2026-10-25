@@ -1,0 +1,18 @@
+/* ---------------------------------------------
+   Status bar
+--------------------------------------------- */
+.statusbar {
+  height: var(--statusbar-h); min-height: var(--statusbar-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px; border-top: 1px solid var(--border-soft);
+  font-size: 11px; color: var(--text-2);
+  position: relative; z-index: 2;
+}
+.statusbar-right { display: flex; align-items: center; gap: 7px; }
+
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--danger); box-shadow: 0 0 6px var(--danger-glow);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.status-dot.is-live { background: var(--live); box-shadow: 0 0 6px var(--live-glow); }
