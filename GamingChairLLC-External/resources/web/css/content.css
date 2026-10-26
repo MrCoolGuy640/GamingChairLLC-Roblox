@@ -32,6 +32,10 @@
 .section-block-header { margin-bottom: 10px; }
 .section-block-header h2 { margin: 0; font-size: 13.5px; font-weight: 650; color: var(--text-1); }
 
+/* Stacked sections on the Global page (one per cheat). Without this the
+   blocks sit flush against each other. */
+.section-block + .section-block { margin-top: 22px; }
+
 .empty-state {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   padding: 42px 20px; background: var(--bg-2); border: 1px dashed var(--border);
