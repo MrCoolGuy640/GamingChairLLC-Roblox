@@ -1,5 +1,9 @@
 // ---------------------------------------------
-// Settings: drill into a panel / back to the list
+// Settings: panel navigation + persisted preferences
+//
+// The saved values live in %LOCALAPPDATA%\GamingChairLLC\settings.json (see
+// src/backend/store.rs). startup.js calls applySettings() with the values
+// loaded by the backend; every change here is written straight back.
 // ---------------------------------------------
 document.querySelectorAll(".settings-row").forEach((row) => {
   row.addEventListener("click", () => {
@@ -16,14 +20,82 @@ document.querySelectorAll(".panel-back").forEach((btn) => {
   });
 });
 
+const themeSelect = document.getElementById("themeSelect");
+const menuKeybindBtn = document.getElementById("menuKeybindBtn");
+const appDataPath = document.getElementById("appDataPath");
+const openAppDataBtn = document.getElementById("openAppDataBtn");
+
 // ---------------------------------------------
-// Generic settings sliders (font size, UI scale...). Only the ones inside the
-// Settings view: the WalkSpeed slider (Global view) is wired by walkspeed.js
-// because it also talks to Python. Both use wireSliderControl().
+// Saving (debounced so a burst of changes is one write)
 // ---------------------------------------------
-document.querySelectorAll("#view-settings .slider-control").forEach((control) => {
-  wireSliderControl(control);
-});
+let pendingSettings = {};
+let settingsTimer = null;
+
+function queueSettingsSave(patch) {
+  Object.assign(pendingSettings, patch);
+  clearTimeout(settingsTimer);
+  settingsTimer = setTimeout(flushSettings, 200);
+}
+
+function flushSettings() {
+  const patch = pendingSettings;
+  pendingSettings = {};
+  if (Object.keys(patch).length === 0) return;
+
+  host.call("save_settings", patch).then((result) => {
+    if (!result || result.success === false) {
+      dbgWarn("save_settings failed:", result);
+    }
+  });
+}
+
+// ---------------------------------------------
+// Applying saved values (called by startup.js)
+// ---------------------------------------------
+function applySettings(settings) {
+  if (!settings) return;
+
+  if (themeSelect && settings.theme) {
+    themeSelect.value = settings.theme;
+    document.documentElement.dataset.theme = settings.theme;
+  }
+
+  if (menuKeybindBtn && settings.menu_keybind) {
+    menuKeybindBtn.textContent = settings.menu_keybind;
+    menuKeybindBtn.dataset.key = settings.menu_keybind;
+  }
+}
+
+function applyAppDataPath(path) {
+  if (!appDataPath) return;
+  appDataPath.textContent = path || "Unavailable";
+  appDataPath.title = path || "";
+}
+
+// ---------------------------------------------
+// Controls
+// ---------------------------------------------
+if (themeSelect) {
+  themeSelect.addEventListener("change", () => {
+    document.documentElement.dataset.theme = themeSelect.value;
+    queueSettingsSave({ theme: themeSelect.value });
+  });
+}
+
+if (openAppDataBtn) {
+  openAppDataBtn.addEventListener("click", async () => {
+    openAppDataBtn.disabled = true;
+    const result = await host.call("open_app_data_folder");
+    openAppDataBtn.disabled = false;
+
+    if (!result || result.success === false) {
+      alert(
+        "Could not open the app data folder: " +
+          ((result && result.error) || "Unknown error")
+      );
+    }
+  });
+}
 
 // ---------------------------------------------
 // Keybind capture buttons
@@ -63,6 +135,7 @@ document.querySelectorAll(".keybind-btn").forEach((btn) => {
       dbg("Keybind captured:", label);
       btn.textContent = label;
       btn.dataset.key = label;
+      queueSettingsSave({ menu_keybind: label });
     }
 
     window.addEventListener("keydown", handleKey, true);

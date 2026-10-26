@@ -17,6 +17,7 @@ use crate::sdk::roblox::Roblox;
 
 use super::explorer::Explorer;
 use super::state::BackendState;
+use super::store::Store;
 use super::worker::BackendLoop;
 
 pub struct Engine {
@@ -24,6 +25,7 @@ pub struct Engine {
     cheats: Arc<Cheats>,
     explorer: Explorer,
     backend: BackendLoop,
+    store: Store,
     paths: Paths,
     lock: Mutex<()>,
 }
@@ -34,11 +36,23 @@ impl Engine {
         let cheats = Arc::new(Cheats::new());
         let backend = BackendLoop::new(Arc::clone(&state), Arc::clone(&cheats), events);
 
+        // Restore the profile that was active last time (or create it).
+        let store = Store::new(paths.app_data.clone());
+        let current = store.ensure_current(&cheats.values_snapshot());
+        cheats.apply_values(&store.profile_cheats(&current));
+
+        log::info!(
+            target: "GamingChairLLC.engine",
+            "Using profile '{current}' ({})",
+            store.root().display()
+        );
+
         Arc::new(Self {
             state,
             cheats,
             explorer: Explorer::new(),
             backend,
+            store,
             paths,
             lock: Mutex::new(()),
         })
@@ -71,6 +85,163 @@ impl Engine {
             "attached": self.state.attached(),
             "loop_hz": self.state.loop_hz(),
         })
+    }
+
+    // -- persistence -----------------------------------------------------
+
+    /// Everything the UI needs at startup: preferences, profiles and the cheat
+    /// values of the profile that was active last time.
+    pub fn bootstrap(&self) -> Value {
+        let _guard = self.lock.lock();
+        let current = self.store.ensure_current(&self.cheats.values_snapshot());
+
+        json!({
+            "success": true,
+            "app_data_dir": self.store.root().display().to_string(),
+            "settings": self.store.settings(),
+            "profiles": self.store.profiles(),
+            "current_profile": current,
+            "cheats": self.cheats.info(),
+        })
+    }
+
+    pub fn save_settings(&self, patch: Value) -> Value {
+        match self.store.save_settings(&patch) {
+            Ok(settings) => json!({ "success": true, "settings": settings }),
+            Err(err) => error(err),
+        }
+    }
+
+    pub fn switch_profile(&self, name: &str) -> Value {
+        let _guard = self.lock.lock();
+
+        let Some(profile) = self.store.find_profile(name) else {
+            return error(format!("Profile '{name}' not found"));
+        };
+
+        if let Err(err) = self.store.set_current(&profile) {
+            return error(err);
+        }
+
+        log::info!(
+            target: "GamingChairLLC.engine",
+            "Switched to profile '{profile}'"
+        );
+
+        self.apply_profile(&profile);
+        self.profiles_payload()
+    }
+
+    pub fn create_profile(&self, name: &str) -> Value {
+        let _guard = self.lock.lock();
+
+        // A new profile starts from what is currently configured.
+        let values = self.cheats.values_snapshot();
+
+        match self.store.create_profile(name, &values) {
+            Ok(profile) => {
+                log::info!(
+                    target: "GamingChairLLC.engine",
+                    "Created profile '{profile}'"
+                );
+                self.apply_profile(&profile);
+                self.profiles_payload()
+            }
+            Err(err) => error(err),
+        }
+    }
+
+    pub fn delete_profile(&self, name: &str) -> Value {
+        let _guard = self.lock.lock();
+
+        match self.store.delete_profile(name) {
+            Ok(current) => {
+                log::info!(
+                    target: "GamingChairLLC.engine",
+                    "Deleted profile '{name}' (now using '{current}')"
+                );
+                self.apply_profile(&current);
+                self.profiles_payload()
+            }
+            Err(err) => error(err),
+        }
+    }
+
+    pub fn open_app_data_folder(&self) -> Value {
+        let path = self.store.root();
+
+        if let Err(err) = std::fs::create_dir_all(path) {
+            return error(format!("Could not create {}: {err}", path.display()));
+        }
+
+        match std::process::Command::new("explorer.exe").arg(path).spawn() {
+            Ok(_) => {
+                log::info!(
+                    target: "GamingChairLLC.engine",
+                    "Opened app data folder: {}",
+                    path.display()
+                );
+                ok()
+            }
+            Err(err) => error(format!("Could not open {}: {err}", path.display())),
+        }
+    }
+
+    fn profiles_payload(&self) -> Value {
+        json!({
+            "success": true,
+            "profiles": self.store.profiles(),
+            "current_profile": self.store.current_profile(),
+            "cheats": self.cheats.info(),
+        })
+    }
+
+    /// Load a profile's values into the cheat registry. Enabled toggles are
+    /// re-applied so switching profiles updates the game immediately; ticked
+    /// cheats pick the values up on the next loop pass.
+    fn apply_profile(&self, profile: &str) {
+        let values = self.store.profile_cheats(profile);
+        let roblox = self.state.roblox();
+
+        for cheat in self.cheats.toggles() {
+            let Some(value) = values.get(cheat.name()) else {
+                continue;
+            };
+            cheat.store_values(value);
+
+            if cheat.enabled() {
+                if let Some(roblox) = roblox.as_ref() {
+                    if let Err(err) = cheat.enable(roblox, cheat.values()) {
+                        log::warn!(
+                            target: "GamingChairLLC.engine",
+                            "Failed to re-apply '{}' after a profile change: {err}",
+                            cheat.name()
+                        );
+                    }
+                }
+            }
+        }
+
+        for cheat in self.cheats.ticked() {
+            if let Some(value) = values.get(cheat.name()) {
+                cheats::ticked_set_values(cheat.as_ref(), value.clone());
+            }
+        }
+
+        self.state.bump_epoch();
+    }
+
+    /// Write the current cheat values into the active profile.
+    fn persist_cheat_values(&self) {
+        let name = self.store.current_profile();
+        let values = self.cheats.values_snapshot();
+
+        if let Err(err) = self.store.write_profile(&name, &values) {
+            log::warn!(
+                target: "GamingChairLLC.engine",
+                "Could not save profile '{name}': {err}"
+            );
+        }
     }
 
     // -- attach / detach -------------------------------------------------
@@ -185,6 +356,10 @@ impl Engine {
         };
 
         let values = clean_values(values);
+        let changed_values = values
+            .as_object()
+            .map(|object| !object.is_empty())
+            .unwrap_or(false);
         let _guard = self.lock.lock();
 
         if let Some(cheat) = self.cheats.find_toggle(name) {
@@ -193,6 +368,10 @@ impl Engine {
             } else {
                 cheat.disable(&roblox)
             };
+
+            if changed_values {
+                self.persist_cheat_values();
+            }
 
             return result_to_json(result);
         }
@@ -204,6 +383,11 @@ impl Engine {
                 cheats::ticked_disable(cheat.as_ref());
             }
             self.state.bump_epoch();
+
+            if changed_values {
+                self.persist_cheat_values();
+            }
+
             return ok();
         }
 
@@ -216,12 +400,15 @@ impl Engine {
         let _guard = self.lock.lock();
 
         if let Some(cheat) = self.cheats.find_toggle(name) {
-            return result_to_json(cheat.update_values(roblox.as_ref(), values));
+            let result = cheat.update_values(roblox.as_ref(), values);
+            self.persist_cheat_values();
+            return result_to_json(result);
         }
 
         if let Some(cheat) = self.cheats.find_ticked(name) {
             cheats::ticked_set_values(cheat.as_ref(), values);
             self.state.bump_epoch();
+            self.persist_cheat_values();
             return ok();
         }
 

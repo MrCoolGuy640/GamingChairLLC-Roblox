@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use parking_lot::Mutex;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use super::{merge_values, ToggleCheat};
 use crate::sdk::roblox::Roblox;
@@ -22,7 +22,10 @@ impl WalkSpeedCheat {
     pub fn new() -> Self {
         Self {
             enabled: AtomicBool::new(false),
-            values: Mutex::new(Value::Object(Default::default())),
+            // A brand-new profile stores the default speed explicitly instead
+            // of an empty object, so the slider value survives a restart even
+            // if the UI default ever changes.
+            values: Mutex::new(json!({ "speed": DEFAULT_SPEED })),
             original: Mutex::new(None),
         }
     }

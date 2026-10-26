@@ -16,6 +16,12 @@ pub const INIT_SCRIPT: &str = r#"
   var METHODS = [
     "get_status",
     "get_loop_stats",
+    "get_bootstrap",
+    "save_settings",
+    "switch_profile",
+    "create_profile",
+    "delete_profile",
+    "open_app_data_folder",
     "attach",
     "detach",
     "get_explorer_tree",

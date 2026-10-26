@@ -25,9 +25,9 @@
 
   const sliderCtl = wireSliderControl(control, {
     onChange(value) {
-      // While OFF the value is just remembered by the UI; it gets sent along
-      // with the toggle when the user turns WalkSpeed on.
-      if (!enabled) return;
+      // The value is always sent, even while WalkSpeed is off: the backend
+      // stores it and writes it into the active profile, and only touches the
+      // game when the cheat is enabled.
       host.queueLatest("walkspeed", "set_cheat_values", "walkspeed", {speed: value});
     },
   });
@@ -57,5 +57,13 @@
     get isAttached() { return isAttached; },
     get walkspeedEnabled() { return enabled; },
     get walkspeedValue() { return sliderCtl.value; },
+  };
+
+  // Used by the profile UI to mirror a profile's saved speed in the controls
+  // without treating it as a user edit.
+  window.cheatControls = window.cheatControls || {};
+  window.cheatControls.walkspeed = {
+    setValue(value) { sliderCtl.set(value); },
+    get value() { return sliderCtl.value; },
   };
 })();

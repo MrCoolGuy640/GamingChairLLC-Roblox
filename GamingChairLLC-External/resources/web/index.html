@@ -80,6 +80,18 @@
             <p>Overview and shared state for the application.</p>
           </div>
 
+          <div class="profile-bar">
+            <div class="profile-bar-text">
+              <span class="profile-bar-title">Profile</span>
+              <span class="profile-bar-desc">Saved values for your global cheats.</span>
+            </div>
+            <div class="profile-bar-actions">
+              <select class="dropdown profile-select" id="profileSelect" aria-label="Active profile"></select>
+              <button class="btn" id="profileNewBtn" type="button">New</button>
+              <button class="btn btn-danger" id="profileDeleteBtn" type="button">Delete</button>
+            </div>
+          </div>
+
           <div class="section-block">
             <div class="section-block-header">
               <h2>WalkSpeed</h2>
@@ -143,35 +155,21 @@
         <section class="view" id="view-settings">
           <div class="page-header">
             <h1>Settings</h1>
-            <p>Configure preferences and behavior.</p>
+            <p>Changes are saved automatically.</p>
           </div>
 
           <div class="settings-list" id="settingsList">
             <button class="settings-row" data-panel="appearance">
               <div class="settings-row-text">
                 <span class="settings-row-title">Appearance</span>
-                <span class="settings-row-desc">Theme, accent color, and layout density.</span>
-              </div>
-              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
-            </button>
-            <button class="settings-row" data-panel="behavior">
-              <div class="settings-row-text">
-                <span class="settings-row-title">Behavior</span>
-                <span class="settings-row-desc">Startup, notifications, and defaults.</span>
-              </div>
-              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
-            </button>
-            <button class="settings-row" data-panel="editor">
-              <div class="settings-row-text">
-                <span class="settings-row-title">Editor</span>
-                <span class="settings-row-desc">Font, indentation, and syntax highlighting.</span>
+                <span class="settings-row-desc">Theme.</span>
               </div>
               <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
             </button>
             <button class="settings-row" data-panel="advanced">
               <div class="settings-row-text">
                 <span class="settings-row-title">Advanced</span>
-                <span class="settings-row-desc">Keybinds, logging, and experimental options.</span>
+                <span class="settings-row-desc">Keybind and app data folder.</span>
               </div>
               <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
             </button>
@@ -185,128 +183,19 @@
             </button>
             <div class="panel-title">
               <h2>Appearance</h2>
-              <p>Theme, accent color, and layout density.</p>
+              <p>Theme.</p>
             </div>
             <div class="control-list">
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Dark Mode</span>
-                  <span class="control-desc">Use a dark color scheme across the app.</span>
-                </div>
-                <label class="toggle">
-                  <input type="checkbox" checked>
-                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                </label>
-              </div>
               <div class="control-row">
                 <div class="control-text">
                   <span class="control-title">Theme</span>
                   <span class="control-desc">Choose how the interface looks.</span>
                 </div>
-                <select class="dropdown">
-                  <option>Dark</option>
-                  <option>Light</option>
-                  <option>System</option>
+                <select class="dropdown" id="themeSelect">
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                  <option value="system">System</option>
                 </select>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">UI Scale</span>
-                  <span class="control-desc">Adjust the overall interface size.</span>
-                </div>
-                <div class="slider-control">
-                  <input type="range" class="slider" min="80" max="150" value="100" step="1">
-                  <input type="number" class="slider-input" min="80" max="150" value="100">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Behavior panel -->
-          <div class="settings-panel" id="panel-behavior">
-            <button class="panel-back">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>
-              <span>Settings</span>
-            </button>
-            <div class="panel-title">
-              <h2>Behavior</h2>
-              <p>Startup, notifications, and defaults.</p>
-            </div>
-            <div class="control-list">
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Launch on Startup</span>
-                  <span class="control-desc">Open the app automatically when you sign in.</span>
-                </div>
-                <label class="toggle">
-                  <input type="checkbox">
-                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                </label>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Show Notifications</span>
-                  <span class="control-desc">Get notified about important events.</span>
-                </div>
-                <label class="toggle">
-                  <input type="checkbox" checked>
-                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                </label>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Default Page</span>
-                  <span class="control-desc">Which page opens when the app starts.</span>
-                </div>
-                <select class="dropdown">
-                  <option>Global</option>
-                  <option>Games</option>
-                  <option>Explorer</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Editor panel -->
-          <div class="settings-panel" id="panel-editor">
-            <button class="panel-back">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>
-              <span>Settings</span>
-            </button>
-            <div class="panel-title">
-              <h2>Editor</h2>
-              <p>Font, indentation, and syntax highlighting.</p>
-            </div>
-            <div class="control-list">
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Font Size</span>
-                  <span class="control-desc">Text size used in the script editor.</span>
-                </div>
-                <div class="slider-control">
-                  <input type="range" class="slider" min="8" max="24" value="14" step="1">
-                  <input type="number" class="slider-input" min="8" max="24" value="14">
-                </div>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Indentation</span>
-                  <span class="control-desc">Insert tabs or spaces on Tab.</span>
-                </div>
-                <select class="dropdown">
-                  <option>Tabs</option>
-                  <option>Spaces</option>
-                </select>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Syntax Highlighting</span>
-                  <span class="control-desc">Color code by token type.</span>
-                </div>
-                <label class="toggle">
-                  <input type="checkbox" checked>
-                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                </label>
               </div>
             </div>
           </div>
@@ -319,7 +208,7 @@
             </button>
             <div class="panel-title">
               <h2>Advanced</h2>
-              <p>Keybinds, logging, and experimental options.</p>
+              <p>Keybind and app data folder.</p>
             </div>
             <div class="control-list">
               <div class="control-row">
@@ -327,29 +216,14 @@
                   <span class="control-title">Toggle Menu Keybind</span>
                   <span class="control-desc">Key used to show or hide the interface.</span>
                 </div>
-                <button class="keybind-btn" data-key="Insert">Insert</button>
+                <button class="keybind-btn" id="menuKeybindBtn" data-key="Insert">Insert</button>
               </div>
               <div class="control-row">
                 <div class="control-text">
-                  <span class="control-title">Enable Logging</span>
-                  <span class="control-desc">Write diagnostic output to a log file.</span>
+                  <span class="control-title">App Data Folder</span>
+                  <span class="control-desc mono-path" id="appDataPath">Loading…</span>
                 </div>
-                <label class="toggle">
-                  <input type="checkbox" checked>
-                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                </label>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Log Level</span>
-                  <span class="control-desc">How much detail gets written to logs.</span>
-                </div>
-                <select class="dropdown">
-                  <option>Info</option>
-                  <option>Warning</option>
-                  <option>Error</option>
-                  <option>Debug</option>
-                </select>
+                <button class="btn" id="openAppDataBtn" type="button">Open Folder</button>
               </div>
             </div>
           </div>
@@ -394,6 +268,20 @@
       </div>
     </footer>
 
+    <!-- Profile dialog -->
+    <div class="modal-overlay" id="profileModal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <h3 class="modal-title" id="profileModalTitle">New profile</h3>
+        <p class="modal-text" id="profileModalText"></p>
+        <input type="text" class="modal-input" id="profileModalInput" maxlength="32" autocomplete="off" spellcheck="false">
+        <p class="modal-error" id="profileModalError" hidden></p>
+        <div class="modal-actions">
+          <button class="btn" id="profileModalCancel" type="button">Cancel</button>
+          <button class="btn btn-primary" id="profileModalConfirm" type="button">Create</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 
@@ -407,5 +295,7 @@
 <script src="/web/js/games.js"></script>
 <script src="/web/js/walkspeed.js"></script>
 <script src="/web/js/noclip.js"></script>
+<script src="/web/js/profiles.js"></script>
+<script src="/web/js/startup.js"></script>
 </body>
 </html>

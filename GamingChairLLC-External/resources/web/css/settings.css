@@ -54,6 +54,13 @@
 .control-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .control-title { font-size: 12.5px; font-weight: 600; color: var(--text-0); }
 .control-desc { font-size: 11.5px; color: var(--text-2); }
+.control-desc.mono-path {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  word-break: break-all;
+  user-select: text;
+}
 
 /* Toggle switch */
 .toggle { position: relative; display: inline-flex; flex-shrink: 0; cursor: pointer; }

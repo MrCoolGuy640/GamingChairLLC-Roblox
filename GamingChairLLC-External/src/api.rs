@@ -10,6 +10,14 @@ pub fn dispatch(engine: &Engine, method: &str, args: &[Value]) -> Value {
     match method {
         "get_status" => engine.status(),
         "get_loop_stats" => engine.loop_stats(),
+        "get_bootstrap" => engine.bootstrap(),
+        "save_settings" => engine.save_settings(
+            args.first().cloned().unwrap_or_else(|| json!({})),
+        ),
+        "switch_profile" => engine.switch_profile(&string_arg(args, 0)),
+        "create_profile" => engine.create_profile(&string_arg(args, 0)),
+        "delete_profile" => engine.delete_profile(&string_arg(args, 0)),
+        "open_app_data_folder" => engine.open_app_data_folder(),
 
         "attach" => engine.attach(),
         "detach" => engine.detach(),

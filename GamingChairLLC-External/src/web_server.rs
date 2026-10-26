@@ -13,7 +13,10 @@ use tiny_http::{Header, Request, Response, Server};
 
 use crate::config::{self, Paths};
 
-const CACHE_CONTROL: &str = "public, max-age=86400, immutable";
+/// Always re-fetch from disk. The UI is served from memory-speed loopback, and
+/// a persistent WebView profile would otherwise keep serving an old script or
+/// stylesheet after the app has been updated.
+const CACHE_CONTROL: &str = "no-store";
 
 pub struct ResourceServer {
     server: Arc<Server>,

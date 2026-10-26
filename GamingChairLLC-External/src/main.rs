@@ -40,6 +40,10 @@ fn main() -> anyhow::Result<()> {
     let paths = config::Paths::discover();
     logging::init(&paths)?;
 
+    if let Err(err) = paths.ensure_dirs() {
+        log::warn!(target: "GamingChairLLC", "Could not create data folders: {err}");
+    }
+
     log::info!(
         target: "GamingChairLLC",
         "Starting {} {} ({})",
@@ -49,8 +53,9 @@ fn main() -> anyhow::Result<()> {
     );
     log::debug!(
         target: "GamingChairLLC",
-        "Resources: {}",
-        paths.resources.display()
+        "Resources: {} | App data: {}",
+        paths.resources.display(),
+        paths.app_data.display()
     );
 
     let server = web_server::ResourceServer::start(&paths)?;

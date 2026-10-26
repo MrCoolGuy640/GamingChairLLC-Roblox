@@ -319,6 +319,40 @@ impl Cheats {
 
         Value::Object(map)
     }
+
+    /// Every cheat's current accepted values, keyed by cheat name. This is what
+    /// gets written into a profile.
+    pub fn values_snapshot(&self) -> Value {
+        let mut map = Map::new();
+
+        for cheat in &self.toggles {
+            map.insert(cheat.name().to_string(), cheat.values());
+        }
+        for cheat in &self.ticked {
+            map.insert(cheat.name().to_string(), cheat.meta().values());
+        }
+
+        Value::Object(map)
+    }
+
+    /// Store values from a profile without enabling anything or touching the
+    /// game. Used when a profile is loaded before attaching.
+    pub fn apply_values(&self, values: &Value) {
+        let Some(values) = values.as_object() else {
+            return;
+        };
+
+        for cheat in &self.toggles {
+            if let Some(value) = values.get(cheat.name()) {
+                cheat.store_values(value);
+            }
+        }
+        for cheat in &self.ticked {
+            if let Some(value) = values.get(cheat.name()) {
+                ticked_set_values(cheat.as_ref(), value.clone());
+            }
+        }
+    }
 }
 
 impl Default for Cheats {

@@ -29,12 +29,19 @@ pub const WINDOW_BG: (u8, u8, u8, u8) = (14, 14, 17, 255);
 pub const LOOP_TARGET_HZ: u32 = 1000;
 
 /// All filesystem locations the app needs.
+///
+/// Everything the app writes lives under `%LOCALAPPDATA%\GamingChairLLC` so a
+/// build can be copied anywhere (or run from a read-only folder) without
+/// mixing user data into the executable's directory.
 #[derive(Clone, Debug)]
 pub struct Paths {
+    /// `%LOCALAPPDATA%\GamingChairLLC`.
+    pub app_data: PathBuf,
     pub resources: PathBuf,
     pub icon_file: PathBuf,
     pub log_dir: PathBuf,
     pub log_file: PathBuf,
+    /// Offsets cache (kept in a `data` subfolder of the app data directory).
     pub data_dir: PathBuf,
     pub offsets_cache: PathBuf,
     pub offsets_version_file: PathBuf,
@@ -46,13 +53,10 @@ impl Paths {
         let exe = std::env::current_exe().ok();
 
         let resources = find_resources(&cwd, exe.as_deref());
-        let project_dir = resources
-            .parent()
-            .map(Path::to_path_buf)
-            .unwrap_or_else(|| cwd.clone());
+        let app_data = local_app_data().join(APP_NAME);
 
-        let log_dir = project_dir.join("logs");
-        let data_dir = project_dir.join("data");
+        let log_dir = app_data.join("logs");
+        let data_dir = app_data.join("data");
 
         Self {
             icon_file: resources.join("icons").join("icon.ico"),
@@ -60,10 +64,34 @@ impl Paths {
             offsets_cache: data_dir.join("offsets.json"),
             offsets_version_file: data_dir.join("last_checked_offsets.txt"),
             resources,
+            app_data,
             log_dir,
             data_dir,
         }
     }
+
+    /// Create the writable directories. Safe to call repeatedly.
+    pub fn ensure_dirs(&self) -> std::io::Result<()> {
+        std::fs::create_dir_all(&self.app_data)?;
+        std::fs::create_dir_all(&self.log_dir)?;
+        std::fs::create_dir_all(&self.data_dir)?;
+        std::fs::create_dir_all(self.app_data.join("profiles"))?;
+        Ok(())
+    }
+}
+
+/// `%LOCALAPPDATA%`, falling back to `%USERPROFILE%\AppData\Local` and finally
+/// the current directory. `paths` are resolved once, at startup.
+fn local_app_data() -> PathBuf {
+    std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .filter(|path| !path.as_os_str().is_empty())
+        .or_else(|| {
+            std::env::var_os("USERPROFILE")
+                .map(PathBuf::from)
+                .map(|profile| profile.join("AppData").join("Local"))
+        })
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
 }
 
 /// Look for `resources/` next to the working directory first, then around the
