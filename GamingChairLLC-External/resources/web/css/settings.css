@@ -177,3 +177,16 @@
   0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.25); }
   50% { box-shadow: 0 0 0 4px rgba(255,255,255,0); }
 }
+
+/* A dependency owns this control (Fly while Fling is on). The backend refuses
+   the change as well; this just makes the lock visible. */
+.control-row.is-locked .toggle,
+.control-row.is-locked .keybind-btn {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.control-row.is-locked .control-title::after {
+  content: " · locked by Fling";
+  font-weight: 500;
+  color: var(--text-2);
+}

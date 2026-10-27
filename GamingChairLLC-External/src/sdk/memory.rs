@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 use std::ffi::c_void;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -14,7 +14,10 @@ use windows_sys::Win32::System::Diagnostics::ToolHelp::{
     CreateToolhelp32Snapshot, Module32FirstW, Module32NextW, MODULEENTRY32W, TH32CS_SNAPMODULE,
     TH32CS_SNAPMODULE32,
 };
-use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_ALL_ACCESS};
+use windows_sys::Win32::System::Threading::{
+    GetCurrentThread, OpenProcess, SetThreadPriority, PROCESS_ALL_ACCESS,
+    THREAD_PRIORITY_ABOVE_NORMAL,
+};
 
 use super::hyperion::SmartDisabler;
 use super::ntdll::{NtReadVirtualMemory, NtWriteVirtualMemory};
@@ -131,6 +134,18 @@ impl Memory {
         f32::from_le_bytes([data[0], data[1], data[2], data[3]])
     }
 
+    pub fn read_double(&self, address: u64) -> f64 {
+        let data = self.read_bytes(address, 8);
+        if data.len() < 8 {
+            return 0.0;
+        }
+        f64::from_le_bytes(data[..8].try_into().unwrap_or([0; 8]))
+    }
+
+    pub fn write_double(&self, address: u64, value: f64) -> bool {
+        self.write_bytes(address, &value.to_le_bytes())
+    }
+
     pub fn read_bool(&self, address: u64) -> bool {
         let data = self.read_bytes(address, 1);
         data.first().copied().map(|value| value != 0).unwrap_or(false)
@@ -177,6 +192,42 @@ impl Memory {
     pub fn write_bytes(&self, address: u64, data: &[u8]) -> bool {
         self.disabler.disable();
         self.write_bytes_direct(address, data)
+    }
+
+    /// Read without blinding Hyperion. Used by the freezer thread for COPY
+    /// slots, matching the Python worker's separate, never-blinded handle.
+    pub fn read_bytes_direct(&self, address: u64, size: usize) -> Vec<u8> {
+        let mut buffer = vec![0u8; size.min(64 * 1024 * 1024)];
+        let read = self.read_bytes_direct_into(address, &mut buffer);
+        buffer.truncate(read);
+        buffer
+    }
+
+    /// Same read, into a caller-owned buffer. The freezer's COPY slot runs this
+    /// hundreds of thousands of times a second, so it must not allocate.
+    /// Returns the number of bytes read, or 0 on failure.
+    pub fn read_bytes_direct_into(&self, address: u64, buffer: &mut [u8]) -> usize {
+        if address <= 0x1000 || buffer.is_empty() || buffer.len() > 64 * 1024 * 1024 {
+            return 0;
+        }
+
+        let mut bytes_read: usize = 0;
+
+        let status = unsafe {
+            NtReadVirtualMemory(
+                self.handle,
+                address as *const c_void,
+                buffer.as_mut_ptr() as *mut c_void,
+                buffer.len(),
+                &mut bytes_read,
+            )
+        };
+
+        if status != 0 {
+            return 0;
+        }
+
+        bytes_read.min(buffer.len())
     }
 
     /// Write without blinding Hyperion. Used by the freezer thread, matching
@@ -281,9 +332,61 @@ pub struct MemoryFreezer {
     thread: Mutex<Option<thread::JoinHandle<()>>>,
 }
 
+/// A slot payload never exceeds this (validated on every insert).
+const MAX_SLOT_BYTES: usize = 64;
+
+/// How often the write loop re-reads the slot table even when nothing signalled
+/// a change. Matches the Python worker's `RESCAN`.
+const FREEZER_RESCAN_PASSES: u32 = 64;
+
+/// What a freezer slot does on every pass.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SlotKind {
+    /// Write a fixed payload (the classic freeze).
+    Hold,
+    /// Read `length` bytes from `src` and write them to the slot address.
+    Copy,
+    /// Fill the slot with random floats in `[lo, hi]`.
+    Random,
+}
+
+struct FreezerSlot {
+    kind: SlotKind,
+    /// HOLD payload.
+    data: Vec<u8>,
+    /// COPY source address.
+    src: u64,
+    length: usize,
+    /// RANDOM range.
+    lo: f32,
+    hi: f32,
+    signed: bool,
+    active: bool,
+}
+
+/// A slot copied out of the table, so a write pass never touches the mutex or
+/// the heap. This is what lets the loop reach the Python worker's rate: the
+/// Python worker memmoves the payload out of shared memory on every pass, and
+/// this is the same idea with a plain array.
+#[derive(Clone, Copy)]
+struct HotSlot {
+    address: u64,
+    kind: SlotKind,
+    length: usize,
+    payload: [u8; MAX_SLOT_BYTES],
+    src: u64,
+    lo: f32,
+    hi: f32,
+    signed: bool,
+}
+
 struct FreezerShared {
     memory: Arc<Memory>,
-    slots: Mutex<HashMap<u64, Vec<u8>>>,
+    slots: Mutex<HashMap<u64, FreezerSlot>>,
+    /// Bumped on every change the write loop has to notice: a slot appearing or
+    /// disappearing, a payload update, an arm/park. The loop rebuilds its hot
+    /// snapshot when this moves instead of locking on every pass.
+    generation: AtomicU64,
     stop: AtomicBool,
 }
 
@@ -292,6 +395,7 @@ impl MemoryFreezer {
         let shared = Arc::new(FreezerShared {
             memory,
             slots: Mutex::new(HashMap::new()),
+            generation: AtomicU64::new(0),
             stop: AtomicBool::new(false),
         });
 
@@ -309,26 +413,147 @@ impl MemoryFreezer {
         })
     }
 
+    /// Freeze `data` at `address` (HOLD slot).
     pub fn freeze(&self, address: u64, data: Vec<u8>) {
-        if data.is_empty() || data.len() > 64 {
+        if data.is_empty() || data.len() > MAX_SLOT_BYTES {
             return;
         }
-        self.shared.slots.lock().insert(address, data);
+        let length = data.len();
+        self.shared.slots.lock().insert(
+            address,
+            FreezerSlot {
+                kind: SlotKind::Hold,
+                data,
+                src: 0,
+                length,
+                lo: 0.0,
+                hi: 0.0,
+                signed: false,
+                active: true,
+            },
+        );
+        self.bump();
+    }
+
+    /// Copy `length` bytes from `src` into `address` on every pass (COPY slot).
+    pub fn freeze_copy(&self, address: u64, src: u64, length: usize) {
+        if address == 0 || src == 0 || length == 0 || length > MAX_SLOT_BYTES {
+            return;
+        }
+        self.shared.slots.lock().insert(
+            address,
+            FreezerSlot {
+                kind: SlotKind::Copy,
+                data: Vec::new(),
+                src,
+                length,
+                lo: 0.0,
+                hi: 0.0,
+                signed: false,
+                active: true,
+            },
+        );
+        self.bump();
+    }
+
+    /// Fill `length` bytes at `address` with fresh random floats each pass
+    /// (RANDOM slot). `signed` gives each float a random sign, which is what
+    /// makes the fling tumble instead of settling on one axis.
+    pub fn freeze_random(&self, address: u64, length: usize, lo: f32, hi: f32, signed: bool) {
+        if address == 0 || length == 0 || length > MAX_SLOT_BYTES || !(hi > lo) {
+            return;
+        }
+        self.shared.slots.lock().insert(
+            address,
+            FreezerSlot {
+                kind: SlotKind::Random,
+                data: Vec::new(),
+                src: 0,
+                length,
+                lo,
+                hi,
+                signed,
+                active: true,
+            },
+        );
+        self.bump();
     }
 
     pub fn unfreeze(&self, address: u64) {
-        self.shared.slots.lock().remove(&address);
+        if self.shared.slots.lock().remove(&address).is_some() {
+            self.bump();
+        }
     }
 
+    /// Replace the payload of a HOLD slot, or the range of a RANDOM slot.
+    /// Unknown addresses are ignored.
     pub fn update(&self, address: u64, data: &[u8]) {
-        if let Some(slot) = self.shared.slots.lock().get_mut(&address) {
-            slot.clear();
-            slot.extend_from_slice(data);
+        {
+            let mut slots = self.shared.slots.lock();
+            let Some(slot) = slots.get_mut(&address) else {
+                return;
+            };
+            if slot.kind != SlotKind::Hold {
+                return;
+            }
+
+            let length = data.len().min(MAX_SLOT_BYTES);
+            slot.data.clear();
+            slot.data.extend_from_slice(&data[..length]);
+            slot.length = length;
         }
+        self.bump();
+    }
+
+    pub fn update_random(&self, address: u64, lo: f32, hi: f32, signed: bool) {
+        {
+            let mut slots = self.shared.slots.lock();
+            let Some(slot) = slots.get_mut(&address) else {
+                return;
+            };
+            if slot.kind != SlotKind::Random || !(hi > lo) {
+                return;
+            }
+            slot.lo = lo;
+            slot.hi = hi;
+            slot.signed = signed;
+        }
+        self.bump();
+    }
+
+    /// Arm or park a slot without removing it. Parking is what lets the aim
+    /// assist hand the camera back to the game without losing its address.
+    pub fn set_active(&self, address: u64, active: bool) {
+        {
+            let mut slots = self.shared.slots.lock();
+            let Some(slot) = slots.get_mut(&address) else {
+                return;
+            };
+            if slot.active == active {
+                return;
+            }
+            slot.active = active;
+        }
+        self.bump();
+    }
+
+    /// Tell the write loop its snapshot is stale.
+    fn bump(&self) {
+        self.shared.generation.fetch_add(1, Ordering::Release);
+    }
+
+    pub fn is_active(&self, address: u64) -> bool {
+        self.shared
+            .slots
+            .lock()
+            .get(&address)
+            .map(|slot| slot.active)
+            .unwrap_or(false)
     }
 
     pub fn unfreeze_all(&self) {
         self.shared.slots.lock().clear();
+        self.bump();
     }
 
     pub fn is_frozen(&self, address: u64) -> bool {
@@ -350,20 +575,128 @@ impl Drop for MemoryFreezer {
     }
 }
 
+/// Write every active slot as fast as the machine allows.
+///
+/// This is the piece that keeps the character where Fly put it. The engine
+/// writes the part's own position and velocity on every physics step, so
+/// whatever writes the *most often* wins; the Python version this ports runs a
+/// dedicated worker process whose loops do nothing but write, and it measures
+/// ~210k passes/sec. A sleep-based loop cannot compete at that scale: at 1 ms
+/// per pass the engine gets a whole frame's worth of writes in between ours,
+/// which is exactly the "snaps back to the ground" and "flung away" behaviour.
+///
+/// So: no sleep while anything is active, a snapshot instead of a lock per
+/// pass, and preallocated buffers so a pass never touches the allocator.
 fn freezer_loop(shared: Arc<FreezerShared>) {
-    while !shared.stop.load(Ordering::Acquire) {
-        let empty = {
-            let slots = shared.slots.lock();
-            for (address, data) in slots.iter() {
-                shared.memory.write_bytes_direct(*address, data);
-            }
-            slots.is_empty()
-        };
+    raise_thread_priority();
 
-        thread::sleep(if empty {
-            Duration::from_millis(10)
-        } else {
-            Duration::from_millis(1)
-        });
+    // xorshift32: cheap, non-repeating, and does not need an allocation.
+    let mut rng: u32 = 0x9E37_79B9;
+
+    let mut hot: Vec<HotSlot> = Vec::with_capacity(8);
+    let mut scratch = [0u8; MAX_SLOT_BYTES];
+    let mut buffer = [0u8; MAX_SLOT_BYTES];
+
+    // `u64::MAX` forces a scan on the first pass.
+    let mut seen_generation = u64::MAX;
+    let mut rescan: u32 = FREEZER_RESCAN_PASSES;
+
+    while !shared.stop.load(Ordering::Acquire) {
+        let generation = shared.generation.load(Ordering::Acquire);
+        rescan += 1;
+
+        if generation != seen_generation || rescan >= FREEZER_RESCAN_PASSES {
+            seen_generation = generation;
+            rescan = 0;
+            hot.clear();
+
+            let slots = shared.slots.lock();
+            for (address, slot) in slots.iter() {
+                if !slot.active || slot.length == 0 || slot.length > MAX_SLOT_BYTES {
+                    continue;
+                }
+
+                let mut entry = HotSlot {
+                    address: *address,
+                    kind: slot.kind,
+                    length: slot.length,
+                    payload: [0u8; MAX_SLOT_BYTES],
+                    src: slot.src,
+                    lo: slot.lo,
+                    hi: slot.hi,
+                    signed: slot.signed,
+                };
+
+                if slot.kind == SlotKind::Hold {
+                    entry.payload[..slot.length].copy_from_slice(&slot.data[..slot.length]);
+                }
+
+                hot.push(entry);
+            }
+        }
+
+        if hot.is_empty() {
+            // Nothing frozen: no reason to burn a core.
+            thread::sleep(Duration::from_millis(10));
+            continue;
+        }
+
+        for slot in &hot {
+            match slot.kind {
+                SlotKind::Hold => {
+                    shared
+                        .memory
+                        .write_bytes_direct(slot.address, &slot.payload[..slot.length]);
+                }
+                SlotKind::Copy => {
+                    if slot.src == 0 {
+                        continue;
+                    }
+
+                    let read = shared
+                        .memory
+                        .read_bytes_direct_into(slot.src, &mut scratch[..slot.length]);
+                    if read == slot.length {
+                        shared
+                            .memory
+                            .write_bytes_direct(slot.address, &scratch[..slot.length]);
+                    }
+                }
+                SlotKind::Random => {
+                    let span = slot.hi - slot.lo;
+                    let mut offset = 0usize;
+
+                    while offset + 4 <= slot.length {
+                        rng ^= rng << 13;
+                        rng ^= rng >> 17;
+                        rng ^= rng << 5;
+
+                        let mut value = slot.lo + span * ((rng >> 8) as f32 / 16_777_216.0);
+                        if slot.signed && (rng & 1) != 0 {
+                            value = -value;
+                        }
+                        buffer[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+                        offset += 4;
+                    }
+
+                    shared
+                        .memory
+                        .write_bytes_direct(slot.address, &buffer[..slot.length]);
+                }
+            }
+        }
+
+        std::hint::spin_loop();
+    }
+}
+
+/// Above normal, deliberately not high or realtime.
+///
+/// This is a spin loop, and at normal priority it gets descheduled for whole
+/// frames under load; the engine's own value then sits in memory for the whole
+/// gap. The Python worker runs at the same priority for the same reason.
+fn raise_thread_priority() {
+    unsafe {
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
     }
 }

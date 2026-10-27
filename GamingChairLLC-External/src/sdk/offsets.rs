@@ -63,6 +63,10 @@ pub struct PrimitiveOffsets {
     pub rotation: u64,
     pub flags: u64,
     pub assembly_linear_velocity: u64,
+    pub assembly_angular_velocity: u64,
+    /// Back-pointer to the owning Instance. Used to prove that a candidate
+    /// really is a BasePart before writing to its Primitive.
+    pub owner: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -74,10 +78,40 @@ pub struct PrimitiveFlagsOffsets {
 #[derive(Debug, Clone)]
 pub struct PlayerOffsets {
     pub local_player: u64,
+    /// `Player.ModelInstance`, the direct pointer to the character model.
     /// Not present in every offsets release; 0 means "unavailable".
+    pub model_instance: u64,
+    /// Legacy alias for the character pointer. Kept so a dump that only
+    /// documents `Character` still works.
     pub character: u64,
     /// `Player.UserId`.
     pub user_id: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct CameraOffsets {
+    pub camera_subject: u64,
+    pub position: u64,
+    /// Row-major 3x3 rotation matrix (36 bytes).
+    pub rotation: u64,
+    /// `Camera.FieldOfView`, in radians.
+    pub field_of_view: u64,
+    /// Two floats: width, height.
+    pub viewport_size: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct WorkspaceOffsets {
+    pub current_camera: u64,
+    pub world: u64,
+    /// `Workspace.DistributedGameTime`, an f64, used to count rendered frames.
+    pub distributed_game_time: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct WorldOffsets {
+    pub fallen_parts_destroy_height: u64,
+    pub gravity: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -104,6 +138,9 @@ pub struct Offsets {
     pub player: PlayerOffsets,
     pub data_model: DataModelOffsets,
     pub chat: ChatOffsets,
+    pub camera: CameraOffsets,
+    pub workspace: WorkspaceOffsets,
+    pub world: WorldOffsets,
 }
 
 impl Offsets {
@@ -129,6 +166,9 @@ impl Offsets {
         let player = root.get("Player");
         let data_model = root.get("DataModel");
         let chat = root.get("ChatInputBarConfiguration");
+        let camera = root.get("Camera");
+        let workspace = root.get("Workspace");
+        let world = root.get("World");
 
         // Reading WalkSpeed: newer offset dumps expose `WalkSpeed`, older ones
         // only `Walkspeed`. Both name the same field; the value written by the
@@ -170,6 +210,9 @@ impl Offsets {
                 rotation: number(primitive, "Rotation").unwrap_or(176),
                 flags: number(primitive, "Flags").unwrap_or(446),
                 assembly_linear_velocity: number(primitive, "AssemblyLinearVelocity").unwrap_or(224),
+                assembly_angular_velocity: number(primitive, "AssemblyAngularVelocity")
+                    .unwrap_or(236),
+                owner: number(primitive, "Owner").unwrap_or(536),
             },
             primitive_flags: PrimitiveFlagsOffsets {
                 anchored: int_number(flags, "Anchored").unwrap_or(2),
@@ -177,6 +220,7 @@ impl Offsets {
             },
             player: PlayerOffsets {
                 local_player: number(player, "LocalPlayer").unwrap_or(280),
+                model_instance: number(player, "ModelInstance").unwrap_or(656),
                 character: number(player, "Character").unwrap_or(0),
                 user_id: number(player, "UserId").unwrap_or(184),
             },
@@ -190,6 +234,23 @@ impl Offsets {
             },
             chat: ChatOffsets {
                 is_focused: number(chat, "IsFocused").unwrap_or(294),
+            },
+            camera: CameraOffsets {
+                camera_subject: number(camera, "CameraSubject").unwrap_or(176),
+                position: number(camera, "Position").unwrap_or(228),
+                rotation: number(camera, "Rotation").unwrap_or(192),
+                field_of_view: number(camera, "FieldOfView").unwrap_or(296),
+                viewport_size: number(camera, "ViewportSize").unwrap_or(708),
+            },
+            workspace: WorkspaceOffsets {
+                current_camera: number(workspace, "CurrentCamera").unwrap_or(1184),
+                world: number(workspace, "World").unwrap_or(1016),
+                distributed_game_time: number(workspace, "DistributedGameTime").unwrap_or(1216),
+            },
+            world: WorldOffsets {
+                fallen_parts_destroy_height: number(world, "FallenPartsDestroyHeight")
+                    .unwrap_or(532),
+                gravity: number(world, "Gravity").unwrap_or(544),
             },
         })
     }
@@ -327,6 +388,8 @@ fn write_cache(paths: &Paths, offsets: &Offsets, version: &str, now: f64) {
             "Rotation": offsets.primitive.rotation,
             "Flags": offsets.primitive.flags,
             "AssemblyLinearVelocity": offsets.primitive.assembly_linear_velocity,
+            "AssemblyAngularVelocity": offsets.primitive.assembly_angular_velocity,
+            "Owner": offsets.primitive.owner,
         },
         "PrimitiveFlags": {
             "Anchored": offsets.primitive_flags.anchored,
@@ -334,6 +397,7 @@ fn write_cache(paths: &Paths, offsets: &Offsets, version: &str, now: f64) {
         },
         "Player": {
             "LocalPlayer": offsets.player.local_player,
+            "ModelInstance": offsets.player.model_instance,
             "Character": offsets.player.character,
             "UserId": offsets.player.user_id,
         },
@@ -344,6 +408,22 @@ fn write_cache(paths: &Paths, offsets: &Offsets, version: &str, now: f64) {
         },
         "ChatInputBarConfiguration": {
             "IsFocused": offsets.chat.is_focused,
+        },
+        "Camera": {
+            "CameraSubject": offsets.camera.camera_subject,
+            "Position": offsets.camera.position,
+            "Rotation": offsets.camera.rotation,
+            "FieldOfView": offsets.camera.field_of_view,
+            "ViewportSize": offsets.camera.viewport_size,
+        },
+        "Workspace": {
+            "CurrentCamera": offsets.workspace.current_camera,
+            "World": offsets.workspace.world,
+            "DistributedGameTime": offsets.workspace.distributed_game_time,
+        },
+        "World": {
+            "FallenPartsDestroyHeight": offsets.world.fallen_parts_destroy_height,
+            "Gravity": offsets.world.gravity,
         },
     });
 
@@ -451,9 +531,22 @@ mod tests {
             "BasePart": {},
             "Primitive": {},
             "PrimitiveFlags": {},
-            "Player": { "LocalPlayer": 280, "UserId": 184 },
+            "Player": { "LocalPlayer": 280, "UserId": 184, "ModelInstance": 656 },
             "DataModel": { "PlaceId": 384, "GameLoaded": 1480, "ServerIP": 1456 },
-            "ChatInputBarConfiguration": { "IsFocused": 294 }
+            "ChatInputBarConfiguration": { "IsFocused": 294 },
+            "Camera": {
+                "CameraSubject": 176,
+                "Position": 228,
+                "Rotation": 192,
+                "FieldOfView": 296,
+                "ViewportSize": 708
+            },
+            "Workspace": {
+                "CurrentCamera": 1184,
+                "World": 1016,
+                "DistributedGameTime": 1216
+            },
+            "World": { "FallenPartsDestroyHeight": 532, "Gravity": 544 }
         })
     }
 
@@ -462,10 +555,16 @@ mod tests {
         let offsets = Offsets::parse(&document()).unwrap();
 
         assert_eq!(offsets.player.user_id, 184);
+        assert_eq!(offsets.player.model_instance, 656);
         assert_eq!(offsets.data_model.place_id, 384);
         assert_eq!(offsets.data_model.game_loaded, 1480);
         assert_eq!(offsets.data_model.server_ip, 1456);
         assert_eq!(offsets.chat.is_focused, 294);
+        assert_eq!(offsets.camera.rotation, 192);
+        assert_eq!(offsets.workspace.current_camera, 1184);
+        assert_eq!(offsets.world.fallen_parts_destroy_height, 532);
+        assert_eq!(offsets.primitive.owner, 536);
+        assert_eq!(offsets.primitive.assembly_angular_velocity, 236);
     }
 
     #[test]
@@ -474,6 +573,9 @@ mod tests {
         let object = value.as_object_mut().unwrap();
         object.remove("DataModel");
         object.remove("ChatInputBarConfiguration");
+        object.remove("Camera");
+        object.remove("Workspace");
+        object.remove("World");
 
         let offsets = Offsets::parse(&value).unwrap();
 
@@ -481,6 +583,9 @@ mod tests {
         assert_eq!(offsets.data_model.game_loaded, 1480);
         assert_eq!(offsets.data_model.server_ip, 1456);
         assert_eq!(offsets.chat.is_focused, 294);
+        assert_eq!(offsets.camera.rotation, 192);
+        assert_eq!(offsets.workspace.world, 1016);
+        assert_eq!(offsets.world.gravity, 544);
     }
 
     #[test]

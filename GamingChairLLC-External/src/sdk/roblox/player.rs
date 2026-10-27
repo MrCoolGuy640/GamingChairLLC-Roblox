@@ -17,22 +17,40 @@ impl Player {
         &self.instance
     }
 
-    /// `Player.Character` is not exposed by every offsets release; when the
-    /// offset is unavailable this returns `None` and callers fall back to
-    /// looking the character up by player name under Workspace.
+    /// `Player.Character` (or `Player.ModelInstance` on newer dumps). Both are
+    /// direct pointers to the character model; when neither is available this
+    /// returns `None` and callers fall back to looking the character up by
+    /// player name under Workspace.
+    ///
+    /// The class check matters when a dump does not document
+    /// `ModelInstance`: the fallback offset would otherwise read some other
+    /// field as a pointer and hand back a bogus Instance that never falls
+    /// through to the name lookup.
     pub fn character(&self) -> Option<Instance> {
         let offsets = &self.instance.ctx().offsets.player;
-        if offsets.character == 0 {
-            return None;
+
+        for offset in [offsets.model_instance, offsets.character] {
+            if offset == 0 {
+                continue;
+            }
+
+            let character = self
+                .instance
+                .ctx()
+                .memory
+                .read_ptr(self.instance.address().wrapping_add(offset));
+
+            if character == 0 {
+                continue;
+            }
+
+            let instance = Instance::new(character, self.instance.ctx().clone());
+            if instance.get_class_name() == "Model" {
+                return Some(instance);
+            }
         }
 
-        let character = self
-            .instance
-            .ctx()
-            .memory
-            .read_ptr(self.instance.address().wrapping_add(offsets.character));
-
-        (character != 0).then(|| Instance::new(character, self.instance.ctx().clone()))
+        None
     }
 
     pub fn is_local_player(&self) -> bool {

@@ -1,4 +1,5 @@
 pub mod hyperion;
+pub mod input;
 pub mod memory;
 pub mod metadata;
 pub mod ntdll;

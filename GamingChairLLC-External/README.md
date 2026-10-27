@@ -114,8 +114,9 @@ WebView2 must be present there as well (see Requirements).
    from [rbxoffsets.com](https://rbxoffsets.com) (or reuses the cached copy in
    `%LOCALAPPDATA%\GamingChairLLC\data\offsets.json`) and waits until the game's
    DataModel is readable (up to 10 seconds).
-4. Use the **Global** page to toggle cheats and the **Explorer** page to browse
-   the object tree and inspect properties.
+4. Use the **Global** page for WalkSpeed, NoClip, Fly, Fling and Sweep, the
+   **Combat** page for Aim Assist, and the **Explorer** page to browse the
+   object tree and inspect properties.
 5. **Detach** (same button) restores any active cheat before closing the
    connection.
 
@@ -137,9 +138,42 @@ switch it on.
 The active profile is remembered in `data.json`, so the next launch restores
 both the selection and the control values.
 
+### Fly, Fling, Sweep and Aim Assist
+
+**Global → Fly** pins the character in place and moves it with `WASD`, `Space`
+and `Ctrl`. Hold `Q` to accelerate; the ramp is raised to `Boost Power`. Speed,
+floor margin and camera-facing are adjustable, and every position Fly writes is
+clamped above the place's kill plane. The default bind is `V`.
+
+**Global → Fling** tumbles the character on random angular velocity. Turning it
+on turns Fly on automatically, and while Fling is on the Fly switch and keybind
+are locked (the backend refuses to turn Fly off too). Turning Fling off stops
+the tumble, zeroes the limbs and stands the character back up at the yaw it was
+facing, without releasing the Fly freeze until it is upright. The default bind
+is `E`.
+
+**Global → Fling → Sweep** teleports to every other player in turn, waits
+`Dwell` seconds on each, then returns to where the sweep started. It also turns
+Fly on and claims the position channel, so `WASD` cannot fight the teleport.
+Sweep is one-shot: it switches itself off after the last player. The default
+bind is `R`.
+
+**Combat → Aim Assist** eases the camera onto the nearest other player instead
+of snapping to them. `Smoothing` is a time constant in seconds (`0` is
+instant), `Strength` scales how much of the eased aim is applied, and
+`Stickiness` is the hysteresis that stops two equally close players from
+flickering. With **Screen Check** on, only players projecting within
+**Screen Radius** pixels of the crosshair are eligible; off ranks everyone by
+world distance. **Aim Part** picks `Head` or `HumanoidRootPart`. The default
+bind is `C`.
+
+Sweep and Aim Assist are also one row each in the profile values, so their
+settings and binds follow the active profile like every other cheat.
+
 ### Keybinds
 
-Each global cheat has a **Keybind** row on the Global page. Click the button and
+Each cheat has a **Keybind** row on the Global page (Aim Assist's is on the
+Combat page). Click the button and
 press a key (letters, digits, `F1`–`F24`, arrows, `Space`, `Ctrl`, `Shift`,
 `Alt`, and the punctuation keys are supported). `Backspace` clears the bind,
 `Escape` cancels. The bind is stored in that cheat's values, so it belongs to
@@ -189,7 +223,11 @@ A profile file looks like this:
   "name": "Default",
   "cheats": {
     "walkspeed": { "speed": 16, "keybind": "F1" },
-    "noclip": { "keybind": "F2" }
+    "noclip": { "keybind": "F2" },
+    "fly": { "keybind": "V", "speed": 1, "boost_power": 4, "floor_margin": 10, "face_camera": true },
+    "fling": { "keybind": "E", "speed": 1000 },
+    "sweep": { "keybind": "R", "dwell": 0.5 },
+    "aim": { "keybind": "C", "smoothing": 0.08, "strength": 1, "stickiness": 0.15, "screen_mode": true, "radius": 150, "aim_part": "head" }
   }
 }
 ```
@@ -214,7 +252,7 @@ src/
     keybinds.rs      keybind polling, foreground/chat gates
     explorer.rs      instance-tree/properties queries
     state.rs         shared state between the UI and the loop
-  cheats/            cheat implementations (WalkSpeed, NoClip)
+  cheats/            cheat implementations (WalkSpeed, NoClip, Fly, Fling, Sweep, Aim Assist)
   sdk/
     memory.rs        process memory access + memory freezer
     hyperion.rs      Hyperion thread blinding

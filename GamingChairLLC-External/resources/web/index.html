@@ -34,6 +34,14 @@
             <span>Global</span>
           </button>
 
+          <button class="nav-item" data-view="combat">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <circle cx="12" cy="12" r="7"/>
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+            </svg>
+            <span>Combat</span>
+          </button>
+
           <button class="nav-item" data-view="games">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
               <rect x="3" y="3" width="7" height="7" rx="1.5"/>
@@ -139,7 +147,227 @@
                </div>
              </div>
            </div>
+
+          <div class="section-block">
+            <div class="section-block-header">
+              <h2>Fly</h2>
+            </div>
+            <div class="control-list">
+              <div class="control-row" id="flyEnabledRow">
+                <div class="control-text">
+                  <span class="control-title">Fly Enabled</span>
+                  <span class="control-desc">Freeze in place and move with WASD, Space and Ctrl. Hold Q to accelerate.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-toggle" data-cheat="fly">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Fly Speed</span>
+                  <span class="control-desc">Movement multiplier. 1.0 is the good folder's default.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="fly" data-value="speed">
+                  <input type="range" class="slider" min="0.1" max="10" step="0.1" value="1">
+                  <input type="number" class="slider-input" min="0.1" max="10" step="0.1" value="1">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Boost Power</span>
+                  <span class="control-desc">Exponent for the Q boost ramp. 4.0 is the original.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="fly" data-value="boost_power">
+                  <input type="range" class="slider" min="0" max="10" step="0.5" value="4">
+                  <input type="number" class="slider-input" min="0" max="10" step="0.5" value="4">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Floor Margin</span>
+                  <span class="control-desc">How far above Roblox's kill plane the clamp sits.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="fly" data-value="floor_margin">
+                  <input type="range" class="slider" min="0" max="100" step="1" value="10">
+                  <input type="number" class="slider-input" min="0" max="100" step="1" value="10">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Face Camera</span>
+                  <span class="control-desc">Turn the character to match where you are looking.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-option" data-cheat="fly" data-value="face_camera" checked>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Fly Keybind</span>
+                  <span class="control-desc">Toggle Fly in game. Locked while Fling is on. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="flyKeybindBtn" data-cheat="fly" type="button">None</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div class="section-block-header">
+              <h2>Fling</h2>
+            </div>
+            <div class="control-list">
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Fling Enabled</span>
+                  <span class="control-desc">Tumble on random angular velocity. Turns Fly on automatically.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-toggle" data-cheat="fling">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Fling Speed</span>
+                  <span class="control-desc">Spin strength. 1000 is the good folder's default.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="fling" data-value="speed">
+                  <input type="range" class="slider" min="100" max="2000" step="50" value="1000">
+                  <input type="number" class="slider-input" min="100" max="2000" step="50" value="1000">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Fling Keybind</span>
+                  <span class="control-desc">Toggle Fling in game. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="flingKeybindBtn" data-cheat="fling" type="button">None</button>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Sweep Enabled</span>
+                  <span class="control-desc">Teleport to each other player in turn, then back. Turns Fly on automatically.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-toggle" data-cheat="sweep">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Sweep Dwell</span>
+                  <span class="control-desc">How long to stay on each player before moving on.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="sweep" data-value="dwell">
+                  <input type="range" class="slider" min="0.1" max="5" step="0.1" value="0.5">
+                  <input type="number" class="slider-input" min="0.1" max="5" step="0.1" value="0.5">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Sweep Keybind</span>
+                  <span class="control-desc">Start or stop a Sweep in game. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="sweepKeybindBtn" data-cheat="sweep" type="button">None</button>
+              </div>
+            </div>
+          </div>
          </section>
+
+         <!-- Combat -->
+        <section class="view" id="view-combat">
+          <div class="page-header">
+            <h1>Combat</h1>
+            <p>Aim assistance and target handling.</p>
+          </div>
+
+          <div class="section-block">
+            <div class="section-block-header">
+              <h2>Aim Assist</h2>
+            </div>
+            <div class="control-list">
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Aim Assist Enabled</span>
+                  <span class="control-desc">Smoothly keep the camera on the nearest other player.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-toggle" data-cheat="aim">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Smoothing</span>
+                  <span class="control-desc">Time constant in seconds. Lower snaps faster; 0 is instant.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="aim" data-value="smoothing">
+                  <input type="range" class="slider" min="0" max="1" step="0.01" value="0.08">
+                  <input type="number" class="slider-input" min="0" max="1" step="0.01" value="0.08">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Strength</span>
+                  <span class="control-desc">How much of the eased aim is applied each tick.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="aim" data-value="strength">
+                  <input type="range" class="slider" min="0" max="1" step="0.05" value="1">
+                  <input type="number" class="slider-input" min="0" max="1" step="0.05" value="1">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Stickiness</span>
+                  <span class="control-desc">How much closer a new target must be before the aim switches.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="aim" data-value="stickiness">
+                  <input type="range" class="slider" min="0" max="0.95" step="0.01" value="0.15">
+                  <input type="number" class="slider-input" min="0" max="0.95" step="0.01" value="0.15">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Screen Check</span>
+                  <span class="control-desc">Only pick players near the crosshair. Off picks the nearest player anywhere.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-option" data-cheat="aim" data-value="screen_mode" checked>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Screen Radius</span>
+                  <span class="control-desc">How far from the crosshair a target can be, in pixels.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="aim" data-value="radius">
+                  <input type="range" class="slider" min="10" max="1000" step="10" value="150">
+                  <input type="number" class="slider-input" min="10" max="1000" step="10" value="150">
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Aim Part</span>
+                  <span class="control-desc">Which part of the target the camera points at.</span>
+                </div>
+                <select class="dropdown cheat-select" data-cheat="aim" data-value="aim_part">
+                  <option value="head">Head</option>
+                  <option value="root">HumanoidRootPart</option>
+                </select>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Aim Assist Keybind</span>
+                  <span class="control-desc">Toggle Aim Assist in game. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="aimKeybindBtn" data-cheat="aim" type="button">None</button>
+              </div>
+            </div>
+          </div>
+        </section>
 
          <!-- Games -->
         <section class="view" id="view-games">
@@ -311,6 +539,7 @@
 <script src="/web/js/games.js"></script>
 <script src="/web/js/walkspeed.js"></script>
 <script src="/web/js/noclip.js"></script>
+<script src="/web/js/cheats.js"></script>
 <script src="/web/js/keybinds.js"></script>
 <script src="/web/js/profiles.js"></script>
 <script src="/web/js/startup.js"></script>

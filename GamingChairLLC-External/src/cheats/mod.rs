@@ -11,7 +11,12 @@
 //! cheat object; the backend thread mirrors the *desired* state onto its
 //! *running* state via `ticked_apply_sync`.
 
+mod aim;
+mod fling;
+mod fly;
 mod noclip;
+mod session;
+mod sweep;
 mod walk_speed;
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -21,10 +26,39 @@ use std::sync::Arc;
 use parking_lot::Mutex;
 use serde_json::{json, Map, Value};
 
+pub use aim::AimCheat;
+pub use fling::FlingCheat;
+pub use fly::FlyCheat;
 pub use noclip::NoClipCheat;
+pub use session::SharedSession;
+pub use sweep::SweepCheat;
 pub use walk_speed::WalkSpeedCheat;
 
 use crate::sdk::roblox::Roblox;
+
+// ---------------------------------------------------------------------------
+// Value helpers
+// ---------------------------------------------------------------------------
+
+pub fn number(values: &Value, key: &str, default: f64) -> f64 {
+    values
+        .get(key)
+        .and_then(Value::as_f64)
+        .filter(|value| value.is_finite())
+        .unwrap_or(default)
+}
+
+pub fn boolean(values: &Value, key: &str, default: bool) -> bool {
+    values.get(key).and_then(Value::as_bool).unwrap_or(default)
+}
+
+pub fn text(values: &Value, key: &str, default: &str) -> String {
+    values
+        .get(key)
+        .and_then(Value::as_str)
+        .unwrap_or(default)
+        .to_string()
+}
 
 // ---------------------------------------------------------------------------
 // Toggle cheats
@@ -86,9 +120,13 @@ pub struct TickedMeta {
 
 impl TickedMeta {
     pub fn new() -> Self {
+        Self::with_values(Value::Object(Map::new()))
+    }
+
+    pub fn with_values(values: Value) -> Self {
         Self {
             enabled: AtomicBool::new(false),
-            values: Mutex::new(Value::Object(Map::new())),
+            values: Mutex::new(values),
             running: AtomicBool::new(false),
             last_tick: AtomicU64::new(0),
         }
@@ -129,10 +167,18 @@ pub trait TickedCheat: Send + Sync {
         None
     }
 
-    fn on_start(&self, _roblox: &Arc<Roblox>, _values: &Value) {}
+    fn on_start(&self, _roblox: &Arc<Roblox>, _values: &Value) -> Result<(), String> {
+        Ok(())
+    }
     fn on_tick(&self, roblox: &Arc<Roblox>, now: f64);
     fn on_values(&self, _roblox: &Arc<Roblox>, _values: &Value) {}
     fn on_stop(&self, _roblox: &Arc<Roblox>) {}
+
+    /// True exactly once when a one-shot cheat's worker has finished, which
+    /// makes the loop switch the cheat back off.
+    fn take_finished(&self) -> bool {
+        false
+    }
 }
 
 pub fn ticked_info(cheat: &dyn TickedCheat) -> Value {
@@ -164,67 +210,141 @@ pub fn ticked_set_values(cheat: &dyn TickedCheat, values: Value) {
     merge_values(&mut cheat.meta().values.lock(), values);
 }
 
+/// What the loop did to one cheat during a sync pass. The worker turns this
+/// into UI events.
+#[derive(Debug)]
+pub enum SyncOutcome {
+    None,
+    Started,
+    StartFailed(String),
+    Finished,
+}
+
 /// Mirror the desired state onto the running state. Called by the backend loop
 /// whenever the cheat epoch changes (and once at the start of every session).
-pub fn ticked_apply_sync(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>) {
+///
+/// This half only starts and live-updates, and the worker calls it in registry
+/// order so a dependency (Fly) is running before the cheats that need it.
+/// Stopping is a separate, reverse-ordered pass: see `ticked_stop_sync`.
+///
+/// Start failures disable the cheat instead of leaving the UI showing "on" for
+/// something that never ran. A one-shot cheat that has reported completion is
+/// stopped and disabled here too, so a sync pass that races the worker cannot
+/// resurrect it.
+pub fn ticked_apply_sync(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>) -> SyncOutcome {
     let meta = cheat.meta();
     let desired = meta.enabled.load(Ordering::Acquire);
     let running = meta.running.load(Ordering::Acquire);
 
-    if desired && !running {
+    if !desired {
+        return SyncOutcome::None;
+    }
+
+    if running && cheat.take_finished() {
+        meta.running.store(false, Ordering::Release);
+        meta.enabled.store(false, Ordering::Release);
+        stop(cheat, roblox);
+        return SyncOutcome::Finished;
+    }
+
+    if !running {
         let values = meta.values();
         meta.last_tick.store(0, Ordering::Relaxed);
 
-        let started = catch_unwind(AssertUnwindSafe(|| cheat.on_start(roblox, &values)));
-        if started.is_ok() {
-            meta.running.store(true, Ordering::Release);
-        } else {
-            log::error!(
-                target: "GamingChairLLC.cheats",
-                "Cheat '{}' panicked in on_start; leaving it disabled",
-                cheat.name()
-            );
-            meta.enabled.store(false, Ordering::Release);
-        }
-    } else if desired {
-        let values = meta.values();
-        if catch_unwind(AssertUnwindSafe(|| cheat.on_values(roblox, &values))).is_err() {
-            log::error!(
-                target: "GamingChairLLC.cheats",
-                "Cheat '{}' panicked in on_values",
-                cheat.name()
-            );
-        }
-    } else if running {
-        meta.running.store(false, Ordering::Release);
-        if catch_unwind(AssertUnwindSafe(|| cheat.on_stop(roblox))).is_err() {
-            log::error!(
-                target: "GamingChairLLC.cheats",
-                "Cheat '{}' panicked in on_stop",
-                cheat.name()
-            );
-        }
+        return match catch_unwind(AssertUnwindSafe(|| cheat.on_start(roblox, &values))) {
+            Ok(Ok(())) => {
+                meta.running.store(true, Ordering::Release);
+                SyncOutcome::Started
+            }
+            Ok(Err(err)) => {
+                log::warn!(
+                    target: "GamingChairLLC.cheats",
+                    "Cheat '{}' could not start: {err}",
+                    cheat.name()
+                );
+                meta.enabled.store(false, Ordering::Release);
+                SyncOutcome::StartFailed(err)
+            }
+            Err(_) => {
+                log::error!(
+                    target: "GamingChairLLC.cheats",
+                    "Cheat '{}' panicked in on_start; leaving it disabled",
+                    cheat.name()
+                );
+                meta.enabled.store(false, Ordering::Release);
+                SyncOutcome::StartFailed("the cheat panicked while starting".to_string())
+            }
+        };
+    }
+
+    let values = meta.values();
+    if catch_unwind(AssertUnwindSafe(|| cheat.on_values(roblox, &values))).is_err() {
+        log::error!(
+            target: "GamingChairLLC.cheats",
+            "Cheat '{}' panicked in on_values",
+            cheat.name()
+        );
+    }
+    SyncOutcome::None
+}
+
+/// The stop half of a sync pass. The worker calls this in reverse registry
+/// order, so Fling and Sweep have released the Fly session before Fly tears it
+/// down. Returns `true` when the cheat was actually stopped.
+pub fn ticked_stop_sync(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>) -> bool {
+    let meta = cheat.meta();
+    if meta.enabled.load(Ordering::Acquire) {
+        return false;
+    }
+
+    if !meta.running.swap(false, Ordering::AcqRel) {
+        return false;
+    }
+
+    stop(cheat, roblox);
+    true
+}
+
+fn stop(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>) {
+    if catch_unwind(AssertUnwindSafe(|| cheat.on_stop(roblox))).is_err() {
+        log::error!(
+            target: "GamingChairLLC.cheats",
+            "Cheat '{}' panicked in on_stop",
+            cheat.name()
+        );
     }
 }
 
 /// Run the cheat's `on_tick` if it is enabled and its interval allows it.
 ///
+/// Returns `true` when the cheat switched itself off (a one-shot finishing, or
+/// a panic), so the caller can mirror that to the UI.
+///
 /// A panic disables the cheat instead of killing the backend loop; a cheat must
 /// never be able to take the whole tool down.
-pub fn ticked_tick(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>, now: f64) {
+pub fn ticked_tick(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>, now: f64) -> bool {
     let meta = cheat.meta();
 
     // `running` is only set by `ticked_apply_sync` once `on_start` succeeded
     // and cleared by `on_stop`/`halt`. A disabled cheat must never tick, even
     // though it stays registered in the loop's cheat list.
     if !meta.should_tick() {
-        return;
+        return false;
+    }
+
+    // A one-shot worker may finish between sync passes. Stop it here rather
+    // than waiting for the next epoch change.
+    if cheat.take_finished() {
+        meta.running.store(false, Ordering::Release);
+        meta.enabled.store(false, Ordering::Release);
+        stop(cheat, roblox);
+        return true;
     }
 
     if let Some(interval) = cheat.tick_interval() {
         let last = f64::from_bits(meta.last_tick.load(Ordering::Relaxed));
         if now - last < interval {
-            return;
+            return false;
         }
     }
 
@@ -238,7 +358,10 @@ pub fn ticked_tick(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>, now: f64) {
         );
         meta.running.store(false, Ordering::Release);
         meta.enabled.store(false, Ordering::Release);
+        return true;
     }
+
+    false
 }
 
 /// Loop pausing / target lost: undo the effect but keep the desired state.
@@ -248,13 +371,7 @@ pub fn ticked_halt(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>) {
         return;
     }
 
-    if catch_unwind(AssertUnwindSafe(|| cheat.on_stop(roblox))).is_err() {
-        log::error!(
-            target: "GamingChairLLC.cheats",
-            "Cheat '{}' panicked in on_stop while halting",
-            cheat.name()
-        );
-    }
+    stop(cheat, roblox);
 }
 
 pub fn ticked_reset(cheat: &dyn TickedCheat) {
@@ -278,6 +395,13 @@ fn merge_values(slot: &mut Value, new_values: Value) {
 // Registry
 // ---------------------------------------------------------------------------
 
+/// One desired-state change produced by `Cheats::plan_toggle`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PlannedToggle {
+    pub name: &'static str,
+    pub enabled: bool,
+}
+
 pub struct Cheats {
     toggles: Vec<Arc<dyn ToggleCheat>>,
     ticked: Vec<Arc<dyn TickedCheat>>,
@@ -285,9 +409,20 @@ pub struct Cheats {
 
 impl Cheats {
     pub fn new() -> Self {
+        // Registration order is the lifecycle order: Fly starts first (Fling
+        // and Sweep borrow its session) and stops last, because stops run in
+        // reverse. Aim Assist and NoClip are standalone.
+        let shared = SharedSession::new();
+
         Self {
             toggles: vec![Arc::new(WalkSpeedCheat::new())],
-            ticked: vec![Arc::new(NoClipCheat::new())],
+            ticked: vec![
+                Arc::new(FlyCheat::new(shared.clone())),
+                Arc::new(FlingCheat::new(shared.clone())),
+                Arc::new(SweepCheat::new(shared.clone())),
+                Arc::new(AimCheat::new(shared)),
+                Arc::new(NoClipCheat::new()),
+            ],
         }
     }
 
@@ -305,6 +440,69 @@ impl Cheats {
 
     pub fn find_ticked(&self, name: &str) -> Option<&Arc<dyn TickedCheat>> {
         self.ticked.iter().find(|cheat| cheat.name() == name)
+    }
+
+    fn ticked_enabled(&self, name: &str) -> bool {
+        self.find_ticked(name)
+            .map(|cheat| cheat.meta().enabled())
+            .unwrap_or(false)
+    }
+
+    /// Resolve a user toggle request into the full set of desired-state
+    /// changes, applying the dependency policy:
+    ///
+    /// * turning Fling or Sweep on forces Fly on first;
+    /// * Fly cannot be turned off while Fling is on;
+    /// * turning Fly off takes Sweep with it.
+    ///
+    /// The returned list is in the order the changes should be applied. The
+    /// worker does the actual work in registry order (starts) and reverse
+    /// (stops), so this only fixes the desired-state flags and the events the
+    /// UI sees.
+    pub fn plan_toggle(
+        &self,
+        name: &str,
+        enabled: bool,
+    ) -> Result<Vec<PlannedToggle>, String> {
+        let Some(cheat) = self.find_ticked(name) else {
+            return if self.find_toggle(name).is_some() {
+                Ok(Vec::new())
+            } else {
+                Err(format!("Cheat '{name}' not found"))
+            };
+        };
+        let name = cheat.name();
+
+        let mut plan = Vec::new();
+        match (name, enabled) {
+            ("fly", false) => {
+                if self.ticked_enabled("fling") {
+                    return Err("Turn Fling off before turning Fly off".to_string());
+                }
+                if self.ticked_enabled("sweep") {
+                    plan.push(PlannedToggle {
+                        name: "sweep",
+                        enabled: false,
+                    });
+                }
+                plan.push(PlannedToggle {
+                    name: "fly",
+                    enabled: false,
+                });
+            }
+            ("fling" | "sweep", true) => {
+                if !self.ticked_enabled("fly") {
+                    plan.push(PlannedToggle {
+                        name: "fly",
+                        enabled: true,
+                    });
+                }
+                plan.push(PlannedToggle { name, enabled: true });
+            }
+            _ => plan.push(PlannedToggle { name, enabled }),
+        }
+
+        Ok(plan)
     }
 
     pub fn info(&self) -> Value {

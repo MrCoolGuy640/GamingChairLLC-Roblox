@@ -1,8 +1,10 @@
+pub mod camera;
 pub mod connection;
 pub mod constants;
 pub mod context;
 pub mod humanoid;
 pub mod instance;
+pub mod math;
 pub mod part;
 pub mod player;
 pub mod utils;

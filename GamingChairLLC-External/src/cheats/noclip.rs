@@ -81,8 +81,9 @@ impl TickedCheat for NoClipCheat {
         Some(TICK_INTERVAL)
     }
 
-    fn on_start(&self, roblox: &Arc<Roblox>, _values: &Value) {
+    fn on_start(&self, roblox: &Arc<Roblox>, _values: &Value) -> Result<(), String> {
         Self::apply(roblox, true);
+        Ok(())
     }
 
     fn on_tick(&self, roblox: &Arc<Roblox>, _now: f64) {

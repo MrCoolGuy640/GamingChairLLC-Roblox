@@ -34,7 +34,7 @@ pub const WINDOW_BG: (u8, u8, u8, u8) = (14, 14, 17, 255);
 
 /// Backend loop rate. 0 means "uncapped" (uses a full core); 1000 Hz keeps the
 /// loop responsive without wasting CPU. No built-in cheat needs more than that.
-pub const LOOP_TARGET_HZ: u32 = 1000;
+pub const LOOP_TARGET_HZ: u32 = 10000;
 
 /// All filesystem locations the app needs.
 ///

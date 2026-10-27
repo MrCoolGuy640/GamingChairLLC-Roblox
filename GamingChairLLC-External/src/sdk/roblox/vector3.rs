@@ -65,6 +65,22 @@ impl Vector3 {
         )
     }
 
+    pub fn dot(self, other: Self) -> f32 {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    pub fn sub(self, other: Self) -> Self {
+        Self::new(self.x - other.x, self.y - other.y, self.z - other.z)
+    }
+
+    pub fn distance(self, other: Self) -> f32 {
+        self.sub(other).magnitude()
+    }
+
+    pub fn is_finite(self) -> bool {
+        self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
+    }
+
     pub fn multiply(self, other: Self) -> Self {
         Self::new(self.x * other.x, self.y * other.y, self.z * other.z)
     }

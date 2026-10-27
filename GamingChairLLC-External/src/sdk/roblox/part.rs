@@ -7,11 +7,13 @@ use std::ops::Deref;
 use parking_lot::Mutex;
 
 use crate::sdk::roblox::instance::Instance;
+use crate::sdk::roblox::math::Mat3;
 use crate::sdk::roblox::vector3::Vector3;
 
 const FROZEN_POSITION: &str = "Position";
 const FROZEN_ROTATION: &str = "Rotation";
 const FROZEN_VELOCITY: &str = "Velocity";
+const FROZEN_ANGULAR_VELOCITY: &str = "AngularVelocity";
 
 pub struct Part {
     instance: Instance,
@@ -39,6 +41,60 @@ impl Part {
             .read_ptr(self.instance.address().wrapping_add(offsets.base_part.primitive))
     }
 
+    /// A genuine BasePart: the Primitive exists and its `Owner` back-pointer
+    /// points at this Instance. A non-BasePart child holds junk at the
+    /// Primitive offset, and writing there would write into the game's heap.
+    pub fn is_valid(&self) -> bool {
+        let primitive = self.primitive_address();
+        if primitive == 0 {
+            return false;
+        }
+
+        let owner = self
+            .instance
+            .ctx()
+            .memory
+            .read_ptr(primitive.wrapping_add(self.instance.ctx().offsets.primitive.owner));
+
+        owner == self.instance.address()
+    }
+
+    pub fn rotation_address(&self) -> Option<u64> {
+        self.vec3_address(self.instance.ctx().offsets.primitive.rotation)
+    }
+
+    pub fn angular_velocity_address(&self) -> Option<u64> {
+        self.vec3_address(
+            self.instance
+                .ctx()
+                .offsets
+                .primitive
+                .assembly_angular_velocity,
+        )
+    }
+
+    /// The part's full row-major 3x3 rotation, validated as orthonormal.
+    pub fn rotation_matrix(&self) -> Option<Mat3> {
+        let address = self.rotation_address()?;
+        let data = self.instance.ctx().memory.read_bytes(address, 36);
+        let rows = crate::sdk::roblox::math::from_bytes(&data)?;
+
+        crate::sdk::roblox::math::is_valid(&rows).then_some(rows)
+    }
+
+    /// Write all nine floats of the rotation matrix. `write_rotation` only
+    /// replaces row 0 and leaves a sheared, non-orthonormal matrix behind.
+    pub fn write_rotation_matrix(&self, rows: &Mat3) -> bool {
+        let Some(address) = self.rotation_address() else {
+            return false;
+        };
+
+        self.instance
+            .ctx()
+            .memory
+            .write_bytes(address, &crate::sdk::roblox::math::to_bytes(rows))
+    }
+
     fn vec3_address(&self, offset: u64) -> Option<u64> {
         let primitive = self.primitive_address();
         (primitive != 0).then_some(primitive.wrapping_add(offset))
@@ -64,6 +120,16 @@ impl Part {
 
     pub fn velocity(&self) -> Option<Vector3> {
         self.read_vec3(self.instance.ctx().offsets.primitive.assembly_linear_velocity)
+    }
+
+    pub fn angular_velocity(&self) -> Option<Vector3> {
+        self.read_vec3(
+            self.instance
+                .ctx()
+                .offsets
+                .primitive
+                .assembly_angular_velocity,
+        )
     }
 
     pub fn write_position(&self, position: Vector3, freeze: bool) -> bool {
@@ -111,6 +177,23 @@ impl Part {
 
     pub fn unfreeze_velocity(&self) {
         self.unfreeze(FROZEN_VELOCITY);
+    }
+
+    pub fn write_angular_velocity(&self, velocity: Vector3, freeze: bool) -> bool {
+        self.write_vec3(
+            self.instance
+                .ctx()
+                .offsets
+                .primitive
+                .assembly_angular_velocity,
+            FROZEN_ANGULAR_VELOCITY,
+            velocity,
+            freeze,
+        )
+    }
+
+    pub fn unfreeze_angular_velocity(&self) {
+        self.unfreeze(FROZEN_ANGULAR_VELOCITY);
     }
 
     pub fn write_size(&self, size: Vector3) -> bool {

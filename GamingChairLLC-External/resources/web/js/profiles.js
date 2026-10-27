@@ -33,11 +33,28 @@ function applyCheatValues(cheats) {
     window.cheatControls.walkspeed.setValue(speed);
   }
 
+  // Fly/Fling/Sweep/Aim Assist store every setting in the same per-cheat
+  // values object, so a profile switch has to repaint their controls too.
+  applyCheatSettings(cheats);
+
   // Keybinds live in the same per-cheat values object, so they follow the
   // profile too.
   if (typeof window.applyCheatKeybinds === "function") {
     window.applyCheatKeybinds(cheats);
   }
+}
+
+// Repaint every generic cheat control (cheats.js owns these). Controls for
+// cheats that predate it (walkspeed) use their own setter and are skipped.
+function applyCheatSettings(cheats) {
+  if (!cheats) return;
+
+  Object.entries(window.cheatControls || {}).forEach(([name, control]) => {
+    const values = cheats[name] && cheats[name].values;
+    if (values && typeof control.setValues === "function") {
+      control.setValues(values);
+    }
+  });
 }
 
 // ---------------------------------------------

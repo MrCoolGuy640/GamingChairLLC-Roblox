@@ -63,8 +63,9 @@
   async function save(button, cheat, previous, label) {
     setLabel(button, label);
 
+    const field = button.dataset.value || "keybind";
     const result = await host.queue(`keybind-${cheat}`, "set_cheat_values", cheat, {
-      keybind: label,
+      [field]: label,
     });
 
     if (!result || result.success === false) {
@@ -127,8 +128,9 @@
 
     buttons.forEach((button) => {
       const cheat = button.dataset.cheat;
+      const field = button.dataset.value || "keybind";
       const values = cheats[cheat] && cheats[cheat].values;
-      setLabel(button, values && typeof values.keybind === "string" ? values.keybind : "");
+      setLabel(button, values && typeof values[field] === "string" ? values[field] : "");
     });
   };
 

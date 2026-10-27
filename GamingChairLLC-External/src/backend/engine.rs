@@ -27,6 +27,7 @@ pub struct Engine {
     backend: BackendLoop,
     store: Store,
     paths: Paths,
+    events: EventBus,
     lock: Mutex<()>,
 }
 
@@ -34,7 +35,11 @@ impl Engine {
     pub fn new(paths: Paths, events: EventBus) -> Arc<Self> {
         let state = BackendState::new();
         let cheats = Arc::new(Cheats::new());
-        let backend = BackendLoop::new(Arc::clone(&state), Arc::clone(&cheats), events);
+        let backend = BackendLoop::new(
+            Arc::clone(&state),
+            Arc::clone(&cheats),
+            events.clone(),
+        );
 
         // Restore the profile that was active last time (or create it).
         let store = Store::new(paths.app_data.clone());
@@ -54,6 +59,7 @@ impl Engine {
             backend,
             store,
             paths,
+            events,
             lock: Mutex::new(()),
         })
     }
@@ -386,22 +392,40 @@ impl Engine {
             return result_to_json(result);
         }
 
-        if let Some(cheat) = self.cheats.find_ticked(name) {
-            if enabled {
-                cheats::ticked_enable(cheat.as_ref(), Some(values));
+        let plan = match self.cheats.plan_toggle(name, enabled) {
+            Ok(plan) => plan,
+            Err(err) => return error(err),
+        };
+
+        for change in plan {
+            let Some(cheat) = self.cheats.find_ticked(change.name) else {
+                continue;
+            };
+
+            if change.enabled {
+                // Prerequisites inherit Fly's stored values; only the cheat the
+                // user clicked receives the values sent with this request.
+                let patch = (change.name == name).then(|| values.clone());
+                cheats::ticked_enable(cheat.as_ref(), patch);
             } else {
                 cheats::ticked_disable(cheat.as_ref());
             }
-            self.state.bump_epoch();
 
-            if changed_values {
-                self.persist_cheat_values();
-            }
-
-            return ok();
+            // Forced prerequisite changes happen here rather than in the
+            // worker, so mirror them immediately instead of waiting a tick.
+            self.events.emit(
+                "cheat_state",
+                json!({ "name": change.name, "enabled": change.enabled }),
+            );
         }
 
-        error(format!("Cheat '{name}' not found"))
+        self.state.bump_epoch();
+
+        if changed_values {
+            self.persist_cheat_values();
+        }
+
+        ok()
     }
 
     pub fn set_cheat_values(&self, name: &str, values: Value) -> Value {

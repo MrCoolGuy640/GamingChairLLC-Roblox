@@ -22,6 +22,7 @@ use crate::cheats::{self, Cheats};
 use crate::config;
 use crate::events::EventBus;
 use crate::sdk::process;
+use crate::sdk::roblox::Roblox;
 
 use super::keybinds::Keybinds;
 use super::state::BackendState;
@@ -227,13 +228,17 @@ fn session(
         let epoch = state.epoch();
         if epoch != seen_epoch {
             seen_epoch = epoch;
-            for cheat in cheats.ticked() {
-                cheats::ticked_apply_sync(cheat.as_ref(), &roblox);
-            }
+            sync_cheats(cheats, &roblox, events);
         }
 
         for cheat in cheats.ticked() {
-            cheats::ticked_tick(cheat.as_ref(), &roblox, now);
+            if cheats::ticked_tick(cheat.as_ref(), &roblox, now) {
+                // A one-shot finished or a cheat disabled itself after a panic.
+                events.emit(
+                    "cheat_state",
+                    json!({ "name": cheat.name(), "enabled": false }),
+                );
+            }
         }
 
         if last_keybind_poll.elapsed() >= KEYBIND_POLL_INTERVAL {
@@ -282,9 +287,11 @@ fn session(
         set_timer_resolution(false);
     }
 
-    // Undo residual effects. If the target was lost, `drop_attachment` has
-    // already cleared the running flags, so this is a no-op.
-    for cheat in cheats.ticked() {
+    // Undo residual effects. Reverse registry order: Fling and Sweep release
+    // the Fly session before Fly tears it down. If the target was lost,
+    // `drop_attachment` has already cleared the running flags, so this is a
+    // no-op.
+    for cheat in cheats.ticked().iter().rev() {
         cheats::ticked_halt(cheat.as_ref(), &roblox);
     }
 
@@ -295,6 +302,53 @@ fn session(
         let mut active = control.active.lock();
         *active = false;
         control.active_cv.notify_all();
+    }
+}
+
+/// Apply the desired states to the running ones and tell the UI what actually
+/// happened.
+///
+/// Starts run in registry order, so Fly is up before Fling/Sweep borrow its
+/// session; stops run in reverse, so they have let go before Fly is torn down.
+fn sync_cheats(cheats: &Cheats, roblox: &Arc<Roblox>, events: &EventBus) {
+    for cheat in cheats.ticked() {
+        match cheats::ticked_apply_sync(cheat.as_ref(), roblox) {
+            cheats::SyncOutcome::Started => {
+                events.emit(
+                    "cheat_state",
+                    json!({ "name": cheat.name(), "enabled": true }),
+                );
+            }
+            cheats::SyncOutcome::StartFailed(err) => {
+                // `ticked_apply_sync` already cleared the desired flag; mirror
+                // that to the switch so the UI cannot keep showing "on".
+                log::warn!(
+                    target: "GamingChairLLC.loop",
+                    "'{}' is staying off: {err}",
+                    cheat.name()
+                );
+                events.emit(
+                    "cheat_state",
+                    json!({ "name": cheat.name(), "enabled": false }),
+                );
+            }
+            cheats::SyncOutcome::Finished => {
+                events.emit(
+                    "cheat_state",
+                    json!({ "name": cheat.name(), "enabled": false }),
+                );
+            }
+            cheats::SyncOutcome::None => {}
+        }
+    }
+
+    for cheat in cheats.ticked().iter().rev() {
+        if cheats::ticked_stop_sync(cheat.as_ref(), roblox) {
+            events.emit(
+                "cheat_state",
+                json!({ "name": cheat.name(), "enabled": false }),
+            );
+        }
     }
 }
 
@@ -310,7 +364,15 @@ fn drop_attachment(
         cheat.reset();
     }
     for cheat in cheats.ticked() {
+        let was_enabled = cheat.meta().enabled();
         cheats::ticked_reset(cheat.as_ref());
+
+        if was_enabled {
+            events.emit(
+                "cheat_state",
+                json!({ "name": cheat.name(), "enabled": false }),
+            );
+        }
     }
 
     state.dropped(reason);
