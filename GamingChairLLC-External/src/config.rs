@@ -1,20 +1,26 @@
 //! Central configuration: app identity, paths and tunables.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub const APP_NAME: &str = "GamingChairLLC";
-pub const APP_VERSION: &str = "0.1.0";
-pub const BUILD_TYPE: &str = "Developer";
+pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+/// `Developer` for debug builds, `Release` for release builds. Supplied by
+/// `build.rs` so it always matches the text patched into the UI.
+pub const BUILD_TYPE: &str = env!("GC_BUILD_TYPE");
 
-/// Enables the WebView2 devtools and verbose (DEBUG) logging.
+/// Enables verbose (DEBUG) logging.
 pub const DEBUG: bool = true;
+
+/// WebView2 devtools, browser accelerator keys (Ctrl+R, F12, ...) and the
+/// right-click menu. Development builds only.
+pub const DEVTOOLS: bool = cfg!(debug_assertions);
 
 pub const ROBLOX_PROCESS_NAME: &str = "RobloxPlayerBeta.exe";
 pub const OFFSETS_BASE_URL: &str = "https://offsets.imtheo.lol";
 /// How long a downloaded offsets file is considered fresh.
 pub const OFFSETS_REFRESH_SECS: u64 = 600;
 
-/// Local resource server (serves ./resources to the webview).
+/// Local resource server (serves the bundled UI to the webview).
 pub const HOST: &str = "127.0.0.1";
 /// Falls back to an OS-assigned free port when this one is taken.
 pub const PORT: u16 = 8765;
@@ -37,8 +43,6 @@ pub const LOOP_TARGET_HZ: u32 = 1000;
 pub struct Paths {
     /// `%LOCALAPPDATA%\GamingChairLLC`.
     pub app_data: PathBuf,
-    pub resources: PathBuf,
-    pub icon_file: PathBuf,
     pub log_dir: PathBuf,
     pub log_file: PathBuf,
     /// Offsets cache (kept in a `data` subfolder of the app data directory).
@@ -49,21 +53,15 @@ pub struct Paths {
 
 impl Paths {
     pub fn discover() -> Self {
-        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-        let exe = std::env::current_exe().ok();
-
-        let resources = find_resources(&cwd, exe.as_deref());
         let app_data = local_app_data().join(APP_NAME);
 
         let log_dir = app_data.join("logs");
         let data_dir = app_data.join("data");
 
         Self {
-            icon_file: resources.join("icons").join("icon.ico"),
             log_file: log_dir.join("gamingchairllc.log"),
             offsets_cache: data_dir.join("offsets.json"),
             offsets_version_file: data_dir.join("last_checked_offsets.txt"),
-            resources,
             app_data,
             log_dir,
             data_dir,
@@ -92,22 +90,4 @@ fn local_app_data() -> PathBuf {
                 .map(|profile| profile.join("AppData").join("Local"))
         })
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
-}
-
-/// Look for `resources/` next to the working directory first, then around the
-/// executable (so `cargo run` and a copied release build both work).
-fn find_resources(cwd: &Path, exe: Option<&Path>) -> PathBuf {
-    let mut candidates = vec![cwd.join("resources")];
-
-    if let Some(exe_dir) = exe.and_then(Path::parent) {
-        candidates.push(exe_dir.join("resources"));
-        candidates.push(exe_dir.join("..").join("resources"));
-        candidates.push(exe_dir.join("..").join("..").join("resources"));
-    }
-
-    candidates
-        .iter()
-        .find(|candidate| candidate.is_dir())
-        .cloned()
-        .unwrap_or_else(|| cwd.join("resources"))
 }

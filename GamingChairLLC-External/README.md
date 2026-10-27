@@ -40,8 +40,26 @@ The executable is written to:
 target\release\GamingChairLLC.exe
 ```
 
+The UI is baked into the executable, so this one file is the whole app — no
+`resources` folder ships with it.
+
 The first build downloads and compiles the dependencies, so it can take a few
 minutes. Later builds are incremental.
+
+### How the resources are bundled
+
+`build.rs` runs before the crate is compiled:
+
+1. Copies `resources\` to a temporary staging folder under `target\...\out\`.
+2. Patches the staged `web\index.html`: `__BUILD_TYPE__` becomes `Developer`
+   (debug) or `Release` (release), and `__APP_VERSION__` becomes the package
+   version.
+3. Packs the staged tree into a single `resources.bin`.
+4. Deletes the staging folder.
+
+`src/bundle.rs` embeds that blob with `include_bytes!`, and the local HTTP
+server and the window icon read from it. Change anything under `resources\` and
+the next build re-bundles automatically.
 
 ### Development build
 
@@ -49,9 +67,11 @@ minutes. Later builds are incremental.
 cargo run
 ```
 
-`DEBUG` in `src/config.rs` enables WebView2 devtools (right-click → **Inspect**)
-and verbose logging. It is currently `true` for every profile, including
-`--release`; set it to `false` and rebuild to ship a build without devtools.
+Debug builds keep WebView2 devtools (right-click → **Inspect**, F12,
+Ctrl+Shift+I) and browser shortcuts such as Ctrl+R. Release builds disable
+devtools, the default context menu and browser accelerator keys.
+
+`DEBUG` in `src/config.rs` controls verbose (DEBUG) logging.
 
 ### Tests
 
@@ -63,38 +83,21 @@ cargo test
 
 ## Packaging / distributing
 
-The executable is not self-contained: the `resources` folder (UI, icons,
-assets) must be next to it. Everything the app *writes* (settings, profiles,
-offsets cache, logs) goes to `%LOCALAPPDATA%\GamingChairLLC` — see
-[Where your data lives](#where-your-data-lives) — so the program folder itself
-can be read-only.
-
-A ready-to-zip layout:
+A release build is a single self-contained executable:
 
 ```powershell
 cargo build --release
-
-Remove-Item dist -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory dist | Out-Null
 Copy-Item target\release\GamingChairLLC.exe dist\
-Copy-Item resources dist\resources -Recurse
-
-Compress-Archive -Path dist\* -DestinationPath GamingChairLLC.zip -Force
 ```
 
-`dist` is recreated from scratch each time, so re-running the script cannot
-nest a second `resources` folder inside the first.
+Nothing else needs to be next to it. Everything the app *writes* (settings,
+profiles, offsets cache, WebView2 profile, logs) goes to
+`%LOCALAPPDATA%\GamingChairLLC` — see
+[Where your data lives](#where-your-data-lives) — so the program folder itself
+can be read-only.
 
-`GamingChairLLC.zip` now contains:
-
-```text
-GamingChairLLC.exe
-resources\
-```
-
-Unzip it anywhere and run `GamingChairLLC.exe`. The app looks for `resources`
-in the working directory and next to the executable, so both "run from the
-project folder" and "run from an extracted zip" work.
+The status bar (bottom-left) shows `Developer` for debug builds and `Release`
+for release builds.
 
 If Windows reports a missing `VCRUNTIME140.dll` on another PC, install the
 [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe).
@@ -149,6 +152,7 @@ All writable data lives in one folder:
     last_checked_offsets.txt
   logs\
     gamingchairllc.log   rotating log file (about 2 MB × 3)
+  webview\               WebView2 browser profile (cache, local storage)
 ```
 
 `settings.json` is written with defaults on the first launch and then updated
@@ -177,9 +181,11 @@ while the app is closed.
 ## Project layout
 
 ```text
+build.rs             stages, patches and packs resources/ into the executable
 src/
   main.rs            window + WebView + event loop wiring
   api.rs             JS-facing API dispatch
+  bundle.rs          embedded resources (parser, lookups, window icon)
   backend/
     engine.rs        attach/detach, cheats, explorer, settings/profiles
     store.rs         settings.json, data.json and profiles (atomic writes)
@@ -192,10 +198,10 @@ src/
     hyperion.rs      Hyperion thread blinding
     offsets.rs       offsets download/cache
     roblox/          Roblox SDK (Instance, Humanoid, Part, Player, ...)
-  web_server.rs      local HTTP server for resources/
+  web_server.rs      local HTTP server for the bundled UI
   webview.rs         pywebview-compatible JS bridge
-resources/
-  web/               HTML/CSS/JS for the interface (loopback server, port 8765 by default)
+resources/           source files baked into the executable at build time
+  web/               HTML/CSS/JS for the interface (served over loopback, port 8765 by default)
   icons/             UI and Roblox object icons
 ```
 

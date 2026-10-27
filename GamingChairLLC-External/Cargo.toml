@@ -3,7 +3,7 @@ name = "gamingchairllc"
 version = "0.1.0"
 edition = "2021"
 description = "GamingChairLLC external tool"
-build = false
+build = "build.rs"
 
 [[bin]]
 name = "GamingChairLLC"

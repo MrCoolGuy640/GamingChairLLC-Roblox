@@ -6,13 +6,15 @@
 //!
 //!     config        paths + constants
 //!     logging       console + rotating file log
-//!     web_server    serves ./resources to the WebView
+//!     bundle        UI embedded in the executable by build.rs
+//!     web_server    serves the bundled UI to the WebView
 //!     backend       Engine + backend loop + event bus
 //!     api           the JS-callable surface
 //!     win32_style   dark title bar / window icon
 
 mod api;
 mod backend;
+mod bundle;
 mod cheats;
 mod config;
 mod events;
@@ -32,7 +34,7 @@ use tao::dpi::LogicalSize;
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
 use tao::window::{Theme, WindowBuilder};
-use wry::WebViewBuilder;
+use wry::{WebContext, WebViewBuilder, WebViewBuilderExtWindows};
 
 use crate::events::AppEvent;
 
@@ -44,6 +46,12 @@ fn main() -> anyhow::Result<()> {
         log::warn!(target: "GamingChairLLC", "Could not create data folders: {err}");
     }
 
+    // The window icon ships inside the bundle; Win32 wants a file path.
+    let icon_path = paths.data_dir.join("icon.ico");
+    if let Err(err) = bundle::write_icon(&icon_path) {
+        log::warn!(target: "GamingChairLLC", "Could not write the window icon: {err}");
+    }
+
     log::info!(
         target: "GamingChairLLC",
         "Starting {} {} ({})",
@@ -53,12 +61,12 @@ fn main() -> anyhow::Result<()> {
     );
     log::debug!(
         target: "GamingChairLLC",
-        "Resources: {} | App data: {}",
-        paths.resources.display(),
+        "{} bundled files | App data: {}",
+        bundle::len(),
         paths.app_data.display()
     );
 
-    let server = web_server::ResourceServer::start(&paths)?;
+    let server = web_server::ResourceServer::start()?;
     let url = format!("{}/web/index.html", server.base_url());
 
     let mut event_loop_builder = EventLoopBuilder::<AppEvent>::with_user_event();
@@ -84,11 +92,27 @@ fn main() -> anyhow::Result<()> {
     let ipc_engine = Arc::clone(&engine);
     let ipc_proxy = proxy.clone();
 
-    let webview = WebViewBuilder::new()
+    // Keep WebView2's browser profile under our app data folder instead of the
+    // default `GamingChairLLC.exe.WebView2` folder next to the executable.
+    let webview_data_dir = paths.app_data.join("webview");
+    if let Err(err) = std::fs::create_dir_all(&webview_data_dir) {
+        log::warn!(
+            target: "GamingChairLLC",
+            "Could not create the WebView data folder {}: {err}",
+            webview_data_dir.display()
+        );
+    }
+    let mut web_context = WebContext::new(Some(webview_data_dir));
+
+    let webview = WebViewBuilder::new_with_web_context(&mut web_context)
         .with_url(url)
         .with_initialization_script(webview::INIT_SCRIPT)
         .with_background_color(config::WINDOW_BG)
-        .with_devtools(config::DEBUG)
+        // Devtools, browser shortcuts (Ctrl+R, F5, F12, Ctrl+Shift+I, ...) and
+        // the right-click menu are development-build conveniences only.
+        .with_devtools(config::DEVTOOLS)
+        .with_browser_accelerator_keys(config::DEVTOOLS)
+        .with_default_context_menus(config::DEVTOOLS)
         .with_ipc_handler(move |request| {
             // Every call gets its own worker thread, so a slow attach (offsets
             // download, DataModel wait) never blocks the UI thread.
@@ -121,7 +145,7 @@ fn main() -> anyhow::Result<()> {
         })
         .build(&window)?;
 
-    win32_style::apply(&window, &paths.icon_file);
+    win32_style::apply(&window, &icon_path);
 
     let mut webview = Some(webview);
     let mut window = Some(window);

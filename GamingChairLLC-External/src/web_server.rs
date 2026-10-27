@@ -1,21 +1,22 @@
-//! Tiny local HTTP server that serves `resources/` to the WebView.
+//! Tiny local HTTP server that serves the bundled UI to the WebView.
 //!
 //! Bound synchronously so a port problem is known before the window is created;
 //! if the preferred port is taken, an OS-assigned free port is used instead.
+//!
+//! Files come from [`crate::bundle`] (embedded at compile time), not from disk.
 
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 
 use anyhow::{Context, Result};
 use tiny_http::{Header, Request, Response, Server};
 
-use crate::config::{self, Paths};
+use crate::bundle;
+use crate::config;
 
-/// Always re-fetch from disk. The UI is served from memory-speed loopback, and
-/// a persistent WebView profile would otherwise keep serving an old script or
-/// stylesheet after the app has been updated.
+/// The UI is baked into the executable, so the browser cache can only ever hold
+/// stale files after an update. Revalidation is essentially free over loopback.
 const CACHE_CONTROL: &str = "no-store";
 
 pub struct ResourceServer {
@@ -25,7 +26,7 @@ pub struct ResourceServer {
 }
 
 impl ResourceServer {
-    pub fn start(paths: &Paths) -> Result<Self> {
+    pub fn start() -> Result<Self> {
         let preferred = format!("{}:{}", config::HOST, config::PORT);
         let server = match Server::http(preferred.as_str()) {
             Ok(server) => server,
@@ -50,16 +51,16 @@ impl ResourceServer {
 
         let server = Arc::new(server);
         let thread_server = Arc::clone(&server);
-        let root = paths.resources.clone();
 
         let handle = thread::Builder::new()
             .name("ResourceServer".into())
-            .spawn(move || serve_loop(&thread_server, &root))
+            .spawn(move || serve_loop(&thread_server))
             .context("starting the resource server thread")?;
 
         log::info!(
             target: "GamingChairLLC.http",
-            "Resource server listening on {base_url}"
+            "Resource server listening on {base_url} ({} bundled files)",
+            bundle::len()
         );
 
         Ok(Self {
@@ -83,13 +84,13 @@ impl Drop for ResourceServer {
     }
 }
 
-fn serve_loop(server: &Server, root: &Path) {
+fn serve_loop(server: &Server) {
     for request in server.incoming_requests() {
-        serve(root, request);
+        serve(request);
     }
 }
 
-fn serve(root: &Path, request: Request) {
+fn serve(request: Request) {
     let target = normalize_target(request.url());
 
     if target.split('/').any(|part| part == "..") {
@@ -108,16 +109,8 @@ fn serve(root: &Path, request: Request) {
         target.trim_start_matches('/')
     };
 
-    let mut path = PathBuf::from(root);
-    for part in relative.split('/') {
-        if part.is_empty() || part == "." {
-            continue;
-        }
-        path.push(part);
-    }
-
-    match fs::read(&path) {
-        Ok(bytes) => {
+    match bundle::get(relative) {
+        Some(bytes) => {
             log::debug!(
                 target: "GamingChairLLC.http",
                 "200 {} ({} bytes)",
@@ -125,12 +118,12 @@ fn serve(root: &Path, request: Request) {
                 bytes.len()
             );
 
-            let response = Response::from_data(bytes)
-                .with_header(header("Content-Type", mime_for(&path)))
+            let response = Response::from_data(bytes.to_vec())
+                .with_header(header("Content-Type", mime_for(Path::new(relative))))
                 .with_header(header("Cache-Control", CACHE_CONTROL));
             let _ = request.respond(response);
         }
-        Err(_) => {
+        None => {
             log::warn!(
                 target: "GamingChairLLC.http",
                 "404 Not Found: {}",
