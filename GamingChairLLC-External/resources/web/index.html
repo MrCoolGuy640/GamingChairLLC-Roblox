@@ -80,18 +80,6 @@
             <p>Overview and shared state for the application.</p>
           </div>
 
-          <div class="profile-bar">
-            <div class="profile-bar-text">
-              <span class="profile-bar-title">Profile</span>
-              <span class="profile-bar-desc">Saved values for your global cheats.</span>
-            </div>
-            <div class="profile-bar-actions">
-              <select class="dropdown profile-select" id="profileSelect" aria-label="Active profile"></select>
-              <button class="btn" id="profileNewBtn" type="button">New</button>
-              <button class="btn btn-danger" id="profileDeleteBtn" type="button">Delete</button>
-            </div>
-          </div>
-
           <div class="section-block">
             <div class="section-block-header">
               <h2>WalkSpeed</h2>
@@ -158,21 +146,35 @@
             <p>Changes are saved automatically.</p>
           </div>
 
-          <div class="settings-list" id="settingsList">
-            <button class="settings-row" data-panel="appearance">
-              <div class="settings-row-text">
-                <span class="settings-row-title">Appearance</span>
-                <span class="settings-row-desc">Theme.</span>
+          <div class="settings-landing" id="settingsLanding">
+            <div class="profile-bar">
+              <div class="profile-bar-text">
+                <span class="profile-bar-title">Profile</span>
+                <span class="profile-bar-desc">Saved values for your global cheats.</span>
               </div>
-              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
-            </button>
-            <button class="settings-row" data-panel="advanced">
-              <div class="settings-row-text">
-                <span class="settings-row-title">Advanced</span>
-                <span class="settings-row-desc">Keybind and app data folder.</span>
+              <div class="profile-bar-actions">
+                <select class="dropdown profile-select" id="profileSelect" aria-label="Active profile"></select>
+                <button class="btn" id="profileNewBtn" type="button">New</button>
+                <button class="btn btn-danger" id="profileDeleteBtn" type="button">Delete</button>
               </div>
-              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
-            </button>
+            </div>
+
+            <div class="settings-list" id="settingsList">
+              <button class="settings-row" data-panel="appearance">
+                <div class="settings-row-text">
+                  <span class="settings-row-title">Appearance</span>
+                  <span class="settings-row-desc">Theme.</span>
+                </div>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+              <button class="settings-row" data-panel="advanced">
+                <div class="settings-row-text">
+                  <span class="settings-row-title">Advanced</span>
+                  <span class="settings-row-desc">Keybind and app data folder.</span>
+                </div>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+            </div>
           </div>
 
           <!-- Appearance panel -->

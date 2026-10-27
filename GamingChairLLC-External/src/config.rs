@@ -11,8 +11,8 @@ pub const BUILD_TYPE: &str = env!("GC_BUILD_TYPE");
 /// Enables verbose (DEBUG) logging.
 pub const DEBUG: bool = true;
 
-/// WebView2 devtools, browser accelerator keys (Ctrl+R, F12, ...) and the
-/// right-click menu. Development builds only.
+/// WebView2 devtools and browser accelerator keys (Ctrl+R, F12, ...).
+/// Development builds only. The default right-click menu is always disabled.
 pub const DEVTOOLS: bool = cfg!(debug_assertions);
 
 pub const ROBLOX_PROCESS_NAME: &str = "RobloxPlayerBeta.exe";

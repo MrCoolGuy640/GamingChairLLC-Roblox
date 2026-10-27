@@ -1,23 +1,39 @@
 /* ---------------------------------------------
    Explorer — tree + properties
---------------------------------------------- */
-.explorer-layout { display: flex; gap: 14px; align-items: flex-start; }
 
-.tree-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+   Unlike the other views, the explorer is a workspace rather than a reading
+   column: it fills the whole content area and its two panels grow/shrink with
+   the window.
+--------------------------------------------- */
+#view-explorer { max-width: none; }
+#view-explorer.is-active { display: flex; flex-direction: column; height: 100%; }
+#view-explorer .page-header { flex-shrink: 0; }
+
+.explorer-layout {
+  display: flex; flex: 1; gap: 14px;
+  align-items: stretch; min-height: 320px;
+}
+
+.tree-panel {
+  flex: 1 1 0; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; gap: 10px;
+}
 
 .filter-bar {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 12px; background: var(--bg-2);
   border: 1px solid var(--border-soft); border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 .filter-icon { width: 14px; height: 14px; color: var(--text-2); flex-shrink: 0; }
 .filter-input { flex: 1; border: none; background: transparent; outline: none; color: var(--text-0); font-size: 12.5px; font-family: inherit; }
 .filter-input::placeholder { color: var(--text-2); }
 
 .tree-box {
+  flex: 1; min-height: 0;
   background: var(--bg-2); border: 1px solid var(--border-soft);
   border-radius: var(--radius-md); overflow-y: auto;
-  height: 380px; padding: 4px;
+  padding: 4px;
 }
 
 .tree-node { display: flex; flex-direction: column; }
@@ -52,10 +68,13 @@
 .tree-children { display: none; }
 
 .properties-panel {
-  width: 250px; flex-shrink: 0;
+  /* Fluid between 220px and 520px so the panel scales with the window
+     instead of staying a fixed 250px. */
+  flex: 0 0 clamp(220px, 30%, 520px);
+  min-height: 0;
   background: var(--bg-2); border: 1px solid var(--border-soft);
   border-radius: var(--radius-md); overflow: hidden;
-  height: 424px; display: flex; flex-direction: column;
+  display: flex; flex-direction: column;
 }
 
 .properties-header {

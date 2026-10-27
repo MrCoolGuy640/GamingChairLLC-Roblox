@@ -8,7 +8,7 @@
 document.querySelectorAll(".settings-row").forEach((row) => {
   row.addEventListener("click", () => {
     const target = row.dataset.panel;
-    settingsList.classList.add("is-hidden");
+    settingsLanding.classList.add("is-hidden");
     settingsPanels.forEach((p) => p.classList.toggle("is-active", p.id === `panel-${target}`));
   });
 });
@@ -16,7 +16,7 @@ document.querySelectorAll(".settings-row").forEach((row) => {
 document.querySelectorAll(".panel-back").forEach((btn) => {
   btn.addEventListener("click", () => {
     settingsPanels.forEach((p) => p.classList.remove("is-active"));
-    settingsList.classList.remove("is-hidden");
+    settingsLanding.classList.remove("is-hidden");
   });
 });
 

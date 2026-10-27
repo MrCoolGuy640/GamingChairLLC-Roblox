@@ -67,9 +67,10 @@ the next build re-bundles automatically.
 cargo run
 ```
 
-Debug builds keep WebView2 devtools (right-click → **Inspect**, F12,
-Ctrl+Shift+I) and browser shortcuts such as Ctrl+R. Release builds disable
-devtools, the default context menu and browser accelerator keys.
+Debug builds keep WebView2 devtools (F12, Ctrl+Shift+I) and browser shortcuts
+such as Ctrl+R. The default right-click menu is disabled in every build; a
+custom menu will replace it later. Release builds also disable devtools and
+browser accelerator keys.
 
 `DEBUG` in `src/config.rs` controls verbose (DEBUG) logging.
 
@@ -121,7 +122,7 @@ The status bar shows the app version/build and the attach state.
 
 ### Profiles
 
-The **Profile** bar at the top of the Global page stores the *values* of your
+The **Profile** bar at the top of the Settings page stores the *values* of your
 global cheats (WalkSpeed speed, NoClip settings, …). Toggle state is never
 saved: cheats always start off, so nothing is written to the game until you
 switch it on.

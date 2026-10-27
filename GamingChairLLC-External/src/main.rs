@@ -108,11 +108,12 @@ fn main() -> anyhow::Result<()> {
         .with_url(url)
         .with_initialization_script(webview::INIT_SCRIPT)
         .with_background_color(config::WINDOW_BG)
-        // Devtools, browser shortcuts (Ctrl+R, F5, F12, Ctrl+Shift+I, ...) and
-        // the right-click menu are development-build conveniences only.
+        // Devtools and browser shortcuts (Ctrl+R, F5, F12, Ctrl+Shift+I, ...)
+        // are development-build conveniences. The default right-click menu is
+        // disabled in every build; a custom one will replace it later.
         .with_devtools(config::DEVTOOLS)
         .with_browser_accelerator_keys(config::DEVTOOLS)
-        .with_default_context_menus(config::DEVTOOLS)
+        .with_default_context_menus(false)
         .with_ipc_handler(move |request| {
             // Every call gets its own worker thread, so a slow attach (offsets
             // download, DataModel wait) never blocks the UI thread.

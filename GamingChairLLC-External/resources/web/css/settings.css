@@ -6,7 +6,7 @@
   border: 1px solid var(--border-soft); border-radius: var(--radius-md);
   overflow: hidden; background: var(--bg-2);
 }
-.settings-list.is-hidden { display: none; }
+.settings-landing.is-hidden { display: none; }
 
 .settings-row {
   display: flex; align-items: center; justify-content: space-between;

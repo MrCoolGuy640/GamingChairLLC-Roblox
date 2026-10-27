@@ -1,5 +1,5 @@
 // ---------------------------------------------
-// Profiles (Global page)
+// Profiles (Settings page)
 //
 // A profile stores the values of the global cheats. The backend keeps the
 // profile files in %LOCALAPPDATA%\GamingChairLLC\profiles and remembers the

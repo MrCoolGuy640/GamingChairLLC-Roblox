@@ -3,7 +3,7 @@
 // ---------------------------------------------
 const navItems = document.querySelectorAll(".nav-item");
 const views = document.querySelectorAll(".view");
-const settingsList = document.getElementById("settingsList");
+const settingsLanding = document.getElementById("settingsLanding");
 const settingsPanels = document.querySelectorAll(".settings-panel");
 
 navItems.forEach((item) => {
@@ -19,7 +19,7 @@ navItems.forEach((item) => {
     });
 
     if (target === "settings") {
-      settingsList.classList.remove("is-hidden");
+      settingsLanding.classList.remove("is-hidden");
       settingsPanels.forEach((p) => p.classList.remove("is-active"));
     }
 
