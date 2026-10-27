@@ -110,8 +110,15 @@ const keyNameMap = {
   "ArrowRight": "Right",
 };
 
-document.querySelectorAll(".keybind-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
+// ---------------------------------------------
+// Keybind capture button (menu keybind only)
+//
+// Cheat keybinds have their own control in keybinds.js. This block must stay
+// scoped to #menuKeybindBtn so the two handlers never run for the same click.
+// ---------------------------------------------
+if (menuKeybindBtn) {
+  menuKeybindBtn.addEventListener("click", () => {
+    const btn = menuKeybindBtn;
     if (btn.classList.contains("is-listening")) return;
 
     const previousLabel = btn.textContent;
@@ -132,7 +139,7 @@ document.querySelectorAll(".keybind-btn").forEach((btn) => {
         ? e.key.toUpperCase()
         : (keyNameMap[e.key] || e.key);
 
-      dbg("Keybind captured:", label);
+      dbg("Menu keybind captured:", label);
       btn.textContent = label;
       btn.dataset.key = label;
       queueSettingsSave({ menu_keybind: label });
@@ -140,4 +147,4 @@ document.querySelectorAll(".keybind-btn").forEach((btn) => {
 
     window.addEventListener("keydown", handleKey, true);
   });
-});
+}

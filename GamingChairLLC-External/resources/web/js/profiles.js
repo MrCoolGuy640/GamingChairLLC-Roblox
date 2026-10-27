@@ -32,6 +32,12 @@ function applyCheatValues(cheats) {
   if (window.cheatControls?.walkspeed && typeof speed === "number") {
     window.cheatControls.walkspeed.setValue(speed);
   }
+
+  // Keybinds live in the same per-cheat values object, so they follow the
+  // profile too.
+  if (typeof window.applyCheatKeybinds === "function") {
+    window.applyCheatKeybinds(cheats);
+  }
 }
 
 // ---------------------------------------------

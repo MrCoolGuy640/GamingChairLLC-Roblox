@@ -136,6 +136,72 @@ impl Roblox {
     pub fn get_local_root_part(&self) -> Option<Part> {
         utils::get_local_root_part(&self.get_datamodel().ok()?)
     }
+
+    // -- game / player metadata -----------------------------------------
+
+    /// `Player.UserId` of the local player. `0` while there is no character
+    /// (menus, loading) or if the offset is unavailable.
+    pub fn user_id(&self) -> i64 {
+        self.get_local_player()
+            .map(|player| player.user_id())
+            .unwrap_or(0)
+    }
+
+    /// `DataModel.PlaceId`.
+    pub fn place_id(&self) -> i64 {
+        let Some(datamodel) = self.get_datamodel().ok() else {
+            return 0;
+        };
+
+        datamodel.read_long(self.ctx.offsets.data_model.place_id)
+    }
+
+    /// `DataModel.GameLoaded`: true once the client finished loading the place.
+    pub fn game_loaded(&self) -> bool {
+        let Some(datamodel) = self.get_datamodel().ok() else {
+            return false;
+        };
+
+        datamodel.read_bool(self.ctx.offsets.data_model.game_loaded)
+    }
+
+    /// `DataModel.ServerIP` as a string (empty when unavailable).
+    pub fn server_ip(&self) -> String {
+        let Some(datamodel) = self.get_datamodel().ok() else {
+            return String::new();
+        };
+
+        datamodel.read_string_at(
+            datamodel
+                .address()
+                .wrapping_add(self.ctx.offsets.data_model.server_ip),
+        )
+    }
+
+    /// Whether the in-game chat input bar currently has keyboard focus.
+    ///
+    /// `TextChatService.ChatInputBarConfiguration.IsFocused` is read straight
+    /// from memory. Missing service/configuration (older games, main menu)
+    /// counts as "not focused".
+    pub fn is_chat_focused(&self) -> bool {
+        let Some(datamodel) = self.get_datamodel().ok() else {
+            return false;
+        };
+        let Some(service) = datamodel.find_first_child_of_name("TextChatService") else {
+            return false;
+        };
+
+        let bar = service
+            .find_first_child_of_class("ChatInputBarConfiguration")
+            .or_else(|| service.find_first_child_of_name("ChatInputBarConfiguration"))
+            .or_else(|| service.find_first_descendant("ChatInputBarConfiguration"));
+
+        let Some(bar) = bar else {
+            return false;
+        };
+
+        bar.read_bool(self.ctx.offsets.chat.is_focused)
+    }
 }
 
 impl Drop for Roblox {

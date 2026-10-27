@@ -60,10 +60,16 @@
   };
 
   // Used by the profile UI to mirror a profile's saved speed in the controls
-  // without treating it as a user edit.
+  // without treating it as a user edit, and by keybinds.js when a cheat is
+  // toggled from the game.
   window.cheatControls = window.cheatControls || {};
   window.cheatControls.walkspeed = {
     setValue(value) { sliderCtl.set(value); },
     get value() { return sliderCtl.value; },
+    setEnabled(next) {
+      enabled = !!next;
+      toggle.checked = enabled;
+    },
+    get enabled() { return enabled; },
   };
 })();

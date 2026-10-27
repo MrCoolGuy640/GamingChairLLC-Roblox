@@ -111,8 +111,9 @@ WebView2 must be present there as well (see Requirements).
 1. Start Roblox and join a game.
 2. Run `GamingChairLLC.exe`.
 3. Click **Attach**. The app downloads offsets for the running game version
-   (or reuses the cached copy in `%LOCALAPPDATA%\GamingChairLLC\data\offsets.json`)
-   and waits until the game's DataModel is readable (up to 10 seconds).
+   from [rbxoffsets.com](https://rbxoffsets.com) (or reuses the cached copy in
+   `%LOCALAPPDATA%\GamingChairLLC\data\offsets.json`) and waits until the game's
+   DataModel is readable (up to 10 seconds).
 4. Use the **Global** page to toggle cheats and the **Explorer** page to browse
    the object tree and inspect properties.
 5. **Detach** (same button) restores any active cheat before closing the
@@ -135,6 +136,25 @@ switch it on.
 
 The active profile is remembered in `data.json`, so the next launch restores
 both the selection and the control values.
+
+### Keybinds
+
+Each global cheat has a **Keybind** row on the Global page. Click the button and
+press a key (letters, digits, `F1`–`F24`, arrows, `Space`, `Ctrl`, `Shift`,
+`Alt`, and the punctuation keys are supported). `Backspace` clears the bind,
+`Escape` cancels. The bind is stored in that cheat's values, so it belongs to
+the active profile and switches with it.
+
+Binds are handled entirely in the Rust backend. A key toggles the cheat only
+when **both** of these are true:
+
+1. `RobloxPlayerBeta.exe` owns the foreground window, and
+2. the in-game chat input bar is not focused
+   (`ChatInputBarConfiguration.IsFocused`).
+
+A press that happens while either condition fails is ignored. Keys are
+edge-triggered — holding one down toggles once. Toggling from a keybind updates
+the switch in the UI immediately.
 
 ---
 
@@ -168,8 +188,8 @@ A profile file looks like this:
   "version": 1,
   "name": "Default",
   "cheats": {
-    "walkspeed": { "speed": 16 },
-    "noclip": {}
+    "walkspeed": { "speed": 16, "keybind": "F1" },
+    "noclip": { "keybind": "F2" }
   }
 }
 ```
@@ -191,13 +211,15 @@ src/
     engine.rs        attach/detach, cheats, explorer, settings/profiles
     store.rs         settings.json, data.json and profiles (atomic writes)
     worker.rs        always-on backend loop (ticked cheats)
+    keybinds.rs      keybind polling, foreground/chat gates
     explorer.rs      instance-tree/properties queries
     state.rs         shared state between the UI and the loop
   cheats/            cheat implementations (WalkSpeed, NoClip)
   sdk/
     memory.rs        process memory access + memory freezer
     hyperion.rs      Hyperion thread blinding
-    offsets.rs       offsets download/cache
+    offsets.rs       rbxoffsets download/cache
+    metadata.rs      Roblox web metadata (users, avatars, places)
     roblox/          Roblox SDK (Instance, Humanoid, Part, Player, ...)
   web_server.rs      local HTTP server for the bundled UI
   webview.rs         pywebview-compatible JS bridge
@@ -224,7 +246,9 @@ install layout. Start Roblox first, then attach.
 **Offsets download fails**
 The app falls back to the cached copy in
 `%LOCALAPPDATA%\GamingChairLLC\data\offsets.json` when the version has not
-changed. If no cache exists, check your connection to `offsets.imtheo.lol`.
+changed. If no cache exists, check your connection to `rbxoffsets.com`. The
+service keeps the recent Windows builds only, so a very old client may not have
+a dump available.
 
 **Port 8765 is already in use**
 The app automatically picks a free local port; the window still loads

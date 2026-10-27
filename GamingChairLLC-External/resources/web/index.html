@@ -105,8 +105,15 @@
                   <input type="number" class="slider-input" id="walkspeedInput" min="0" max="500" value="16">
                 </div>
               </div>
-</div>
-           </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">WalkSpeed Keybind</span>
+                  <span class="control-desc">Toggle WalkSpeed in game. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="walkspeedKeybindBtn" data-cheat="walkspeed" type="button">None</button>
+              </div>
+            </div>
+          </div>
 
            <div class="section-block">
              <div class="section-block-header">
@@ -122,6 +129,13 @@
                    <input type="checkbox" id="noclipToggle">
                    <span class="toggle-track"><span class="toggle-thumb"></span></span>
                  </label>
+               </div>
+               <div class="control-row">
+                 <div class="control-text">
+                   <span class="control-title">NoClip Keybind</span>
+                   <span class="control-desc">Toggle NoClip in game. Backspace clears.</span>
+                 </div>
+                 <button class="keybind-btn cheat-keybind" id="noclipKeybindBtn" data-cheat="noclip" type="button">None</button>
                </div>
              </div>
            </div>
@@ -297,6 +311,7 @@
 <script src="/web/js/games.js"></script>
 <script src="/web/js/walkspeed.js"></script>
 <script src="/web/js/noclip.js"></script>
+<script src="/web/js/keybinds.js"></script>
 <script src="/web/js/profiles.js"></script>
 <script src="/web/js/startup.js"></script>
 </body>

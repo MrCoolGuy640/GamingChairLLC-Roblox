@@ -23,11 +23,15 @@ use crate::config;
 use crate::events::EventBus;
 use crate::sdk::process;
 
+use super::keybinds::Keybinds;
 use super::state::BackendState;
 
 const LIVENESS_INTERVAL: Duration = Duration::from_secs(1);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const PAUSE_TIMEOUT: Duration = Duration::from_secs(3);
+/// Key state is polled at ~125 Hz: fast enough to feel instant, cheap enough
+/// that the 1000 Hz tick loop does not spend its time on `GetAsyncKeyState`.
+const KEYBIND_POLL_INTERVAL: Duration = Duration::from_millis(8);
 
 struct Control {
     go: AtomicBool,
@@ -204,6 +208,8 @@ fn session(
     let started = Instant::now();
     let mut seen_epoch = u64::MAX; // force a full sync on the first iteration
     let mut last_liveness = Instant::now();
+    let mut last_keybind_poll = Instant::now();
+    let mut keybinds = Keybinds::new();
     let mut hz_count: u64 = 0;
     let mut hz_start = Instant::now();
 
@@ -228,6 +234,11 @@ fn session(
 
         for cheat in cheats.ticked() {
             cheats::ticked_tick(cheat.as_ref(), &roblox, now);
+        }
+
+        if last_keybind_poll.elapsed() >= KEYBIND_POLL_INTERVAL {
+            last_keybind_poll = Instant::now();
+            keybinds.poll(&roblox, cheats, state, events);
         }
 
         hz_count += 1;

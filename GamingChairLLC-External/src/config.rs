@@ -16,7 +16,9 @@ pub const DEBUG: bool = true;
 pub const DEVTOOLS: bool = cfg!(debug_assertions);
 
 pub const ROBLOX_PROCESS_NAME: &str = "RobloxPlayerBeta.exe";
-pub const OFFSETS_BASE_URL: &str = "https://offsets.imtheo.lol";
+/// rbxoffsets: `https://rbxoffsets.com/api/v1/{platform}/offsets/{version}/json`.
+pub const OFFSETS_BASE_URL: &str = "https://rbxoffsets.com";
+pub const OFFSETS_PLATFORM: &str = "windows";
 /// How long a downloaded offsets file is considered fresh.
 pub const OFFSETS_REFRESH_SECS: u64 = 600;
 

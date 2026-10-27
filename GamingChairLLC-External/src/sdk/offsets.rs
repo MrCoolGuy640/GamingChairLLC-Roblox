@@ -1,9 +1,11 @@
 //! Roblox offsets: download for the running game version, cache on disk, and
 //! expose the handful of fields the app actually uses as typed integers.
 //!
-//! The remote API returns a large JSON document (`offsets.json`). Keys are not
-//! guaranteed to remain stable between game versions, so every section has a
-//! sensible fallback and only the data-model pointers are treated as mandatory.
+//! Offsets come from <https://rbxoffsets.com>: `/api/v1/{platform}/offsets/
+//! {version}/json` returns the full dump wrapped in an `Offsets` object. Keys
+//! are not guaranteed to remain stable between game versions, so every section
+//! has a sensible fallback and only the data-model pointers are treated as
+//! mandatory.
 
 use std::fs;
 use std::path::Path;
@@ -74,6 +76,21 @@ pub struct PlayerOffsets {
     pub local_player: u64,
     /// Not present in every offsets release; 0 means "unavailable".
     pub character: u64,
+    /// `Player.UserId`.
+    pub user_id: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct DataModelOffsets {
+    pub place_id: u64,
+    pub game_loaded: u64,
+    pub server_ip: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct ChatOffsets {
+    /// `ChatInputBarConfiguration.IsFocused`.
+    pub is_focused: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -85,6 +102,8 @@ pub struct Offsets {
     pub primitive: PrimitiveOffsets,
     pub primitive_flags: PrimitiveFlagsOffsets,
     pub player: PlayerOffsets,
+    pub data_model: DataModelOffsets,
+    pub chat: ChatOffsets,
 }
 
 impl Offsets {
@@ -108,6 +127,8 @@ impl Offsets {
         let primitive = root.get("Primitive");
         let flags = root.get("PrimitiveFlags");
         let player = root.get("Player");
+        let data_model = root.get("DataModel");
+        let chat = root.get("ChatInputBarConfiguration");
 
         // Reading WalkSpeed: newer offset dumps expose `WalkSpeed`, older ones
         // only `Walkspeed`. Both name the same field; the value written by the
@@ -157,6 +178,18 @@ impl Offsets {
             player: PlayerOffsets {
                 local_player: number(player, "LocalPlayer").unwrap_or(280),
                 character: number(player, "Character").unwrap_or(0),
+                user_id: number(player, "UserId").unwrap_or(184),
+            },
+            // `DataModel` and `ChatInputBarConfiguration` are part of every
+            // rbxoffsets dump; the fallbacks match the layout they have shipped
+            // for a while so an older/partial dump still parses.
+            data_model: DataModelOffsets {
+                place_id: number(data_model, "PlaceId").unwrap_or(384),
+                game_loaded: number(data_model, "GameLoaded").unwrap_or(1480),
+                server_ip: number(data_model, "ServerIP").unwrap_or(1456),
+            },
+            chat: ChatOffsets {
+                is_focused: number(chat, "IsFocused").unwrap_or(294),
             },
         })
     }
@@ -225,12 +258,16 @@ fn load_cached(paths: &Paths) -> Option<Offsets> {
 }
 
 fn download(version: &str) -> Result<Offsets> {
-    let version_folder = if version.starts_with("version-") {
+    let version = if version.starts_with("version-") {
         version.to_string()
     } else {
         format!("version-{version}")
     };
-    let url = format!("{}/{version_folder}/offsets.json", config::OFFSETS_BASE_URL);
+    let url = format!(
+        "{}/api/v1/{}/offsets/{version}/json",
+        config::OFFSETS_BASE_URL,
+        config::OFFSETS_PLATFORM
+    );
 
     log::info!(target: "GamingChairLLC.offsets", "Downloading offsets from {url}");
 
@@ -245,7 +282,7 @@ fn download(version: &str) -> Result<Offsets> {
         .context("requesting offsets")?;
     let mut data: Value = response.json().context("decoding offsets JSON")?;
 
-    // The API sometimes wraps the payload in { "Offsets": { ... } }.
+    // rbxoffsets wraps the dump in { "Offsets": { ... }, "Roblox Version": ... }.
     if let Some(inner) = data.get("Offsets") {
         data = inner.clone();
     }
@@ -298,6 +335,15 @@ fn write_cache(paths: &Paths, offsets: &Offsets, version: &str, now: f64) {
         "Player": {
             "LocalPlayer": offsets.player.local_player,
             "Character": offsets.player.character,
+            "UserId": offsets.player.user_id,
+        },
+        "DataModel": {
+            "PlaceId": offsets.data_model.place_id,
+            "GameLoaded": offsets.data_model.game_loaded,
+            "ServerIP": offsets.data_model.server_ip,
+        },
+        "ChatInputBarConfiguration": {
+            "IsFocused": offsets.chat.is_focused,
         },
     });
 
@@ -390,4 +436,58 @@ fn int_number(section: Option<&Value>, key: &str) -> Option<i32> {
 /// Absolute address of the process base + an offsets pointer.
 pub fn absolute(base: u64, offset: u64) -> u64 {
     base.wrapping_add(offset)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Offsets;
+    use serde_json::{json, Value};
+
+    fn document() -> Value {
+        json!({
+            "Instance": {},
+            "FakeDataModel": { "Pointer": 150312976, "RealDataModel": 504 },
+            "Humanoid": {},
+            "BasePart": {},
+            "Primitive": {},
+            "PrimitiveFlags": {},
+            "Player": { "LocalPlayer": 280, "UserId": 184 },
+            "DataModel": { "PlaceId": 384, "GameLoaded": 1480, "ServerIP": 1456 },
+            "ChatInputBarConfiguration": { "IsFocused": 294 }
+        })
+    }
+
+    #[test]
+    fn parses_game_and_chat_offsets() {
+        let offsets = Offsets::parse(&document()).unwrap();
+
+        assert_eq!(offsets.player.user_id, 184);
+        assert_eq!(offsets.data_model.place_id, 384);
+        assert_eq!(offsets.data_model.game_loaded, 1480);
+        assert_eq!(offsets.data_model.server_ip, 1456);
+        assert_eq!(offsets.chat.is_focused, 294);
+    }
+
+    #[test]
+    fn missing_sections_fall_back_to_the_known_layout() {
+        let mut value = document();
+        let object = value.as_object_mut().unwrap();
+        object.remove("DataModel");
+        object.remove("ChatInputBarConfiguration");
+
+        let offsets = Offsets::parse(&value).unwrap();
+
+        assert_eq!(offsets.data_model.place_id, 384);
+        assert_eq!(offsets.data_model.game_loaded, 1480);
+        assert_eq!(offsets.data_model.server_ip, 1456);
+        assert_eq!(offsets.chat.is_focused, 294);
+    }
+
+    #[test]
+    fn a_dump_without_the_data_model_pointers_is_rejected() {
+        let mut value = document();
+        value.as_object_mut().unwrap().remove("FakeDataModel");
+
+        assert!(Offsets::parse(&value).is_err());
+    }
 }

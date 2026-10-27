@@ -45,6 +45,19 @@ impl Player {
 
         local == self.instance.address()
     }
+
+    /// `Player.UserId`. `0` when the offset is unavailable or the read failed.
+    pub fn user_id(&self) -> i64 {
+        let offsets = &self.instance.ctx().offsets.player;
+        if offsets.user_id == 0 {
+            return 0;
+        }
+
+        self.instance
+            .ctx()
+            .memory
+            .read_long(self.instance.address().wrapping_add(offsets.user_id))
+    }
 }
 
 impl Deref for Player {

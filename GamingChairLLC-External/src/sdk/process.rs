@@ -19,6 +19,7 @@ use windows_sys::Win32::System::Threading::{
     GetExitCodeProcess, OpenProcess, OpenThread, QueryFullProcessImageNameW, PROCESS_QUERY_INFORMATION,
     PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ, THREAD_QUERY_INFORMATION,
 };
+use windows_sys::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
 
 use super::ntdll::NtQueryInformationThread;
 
@@ -92,6 +93,20 @@ pub fn process_image_path(pid: u32) -> Option<PathBuf> {
         Some(PathBuf::from(String::from_utf16_lossy(
             &buffer[..size as usize],
         )))
+    }
+}
+
+/// PID that owns the foreground (focused) window, if any.
+pub fn foreground_pid() -> Option<u32> {
+    unsafe {
+        let window = GetForegroundWindow();
+        if window.is_null() {
+            return None;
+        }
+
+        let mut pid = 0u32;
+        GetWindowThreadProcessId(window, &mut pid);
+        (pid != 0).then_some(pid)
     }
 }
 

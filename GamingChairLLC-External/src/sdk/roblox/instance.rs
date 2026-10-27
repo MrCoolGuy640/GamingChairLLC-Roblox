@@ -38,6 +38,27 @@ impl Instance {
             .write_bytes(self.address + offset, &[u8::from(value)])
     }
 
+    // -- field reads -----------------------------------------------------
+
+    /// `i64`/pointer-sized field at `offset` from this instance's address.
+    pub fn read_long(&self, offset: u64) -> i64 {
+        self.ctx
+            .memory
+            .read_long(self.address.wrapping_add(offset))
+    }
+
+    pub fn read_bool(&self, offset: u64) -> bool {
+        self.ctx
+            .memory
+            .read_bool(self.address.wrapping_add(offset))
+    }
+
+    /// Read a `std::string` that lives at `address` (not at an offset). Used by
+    /// offsets such as `DataModel.ServerIP` that point straight at the string.
+    pub fn read_string_at(&self, address: u64) -> String {
+        self.fetch_string(address)
+    }
+
     // -- nametag ---------------------------------------------------------
 
     pub fn get_name(&self) -> String {

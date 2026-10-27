@@ -33,4 +33,14 @@
 
   window.__dbg = window.__dbg || {};
   window.__dbg.noclipEnabled = function () { return enabled; };
+
+  // Used by keybinds.js when NoClip is toggled from inside the game.
+  window.cheatControls = window.cheatControls || {};
+  window.cheatControls.noclip = {
+    setEnabled(next) {
+      enabled = !!next;
+      toggle.checked = enabled;
+    },
+    get enabled() { return enabled; },
+  };
 })();

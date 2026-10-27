@@ -293,9 +293,19 @@ impl Engine {
             return error(reason);
         }
 
+        let server = roblox.server_ip();
+        let server = if server.is_empty() {
+            "unknown".to_string()
+        } else {
+            server
+        };
+
         log::info!(
             target: "GamingChairLLC.engine",
-            "Attached (PID: {pid})"
+            "Attached (PID: {pid}) | user {} | place {} | game_loaded {} | server {server}",
+            roblox.user_id(),
+            roblox.place_id(),
+            roblox.game_loaded()
         );
         ok()
     }
