@@ -152,7 +152,7 @@ impl Default for ScriptOffsets {
     fn default() -> Self {
         Self {
             module_script_bytecode: 0x120,
-            local_script_bytecode: 0x180,
+            local_script_bytecode: 0x178,
             bytecode_buffer: 0x10,
             bytecode_size: 0x20,
         }
