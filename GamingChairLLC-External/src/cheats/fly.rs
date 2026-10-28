@@ -12,8 +12,8 @@ use parking_lot::Mutex;
 use serde_json::{json, Value};
 
 use super::session::{FlySession, MovementInput, MovementSettings, SharedSession};
-use super::{boolean, number, TickedCheat, TickedMeta};
-use crate::sdk::input::key_down;
+use super::{boolean, number, text, TickedCheat, TickedMeta};
+use crate::sdk::input::{key_down, vk_from_label};
 use crate::sdk::process;
 use crate::sdk::roblox::Roblox;
 
@@ -24,7 +24,6 @@ const VK_S: i32 = 0x53;
 const VK_D: i32 = 0x44;
 const VK_SPACE: i32 = 0x20;
 const VK_CTRL: i32 = 0x11;
-const VK_Q: i32 = 0x51;
 
 const CAMERA_REFRESH: Duration = Duration::from_secs(1);
 
@@ -34,6 +33,9 @@ pub struct FlySettings {
     pub boost_power: f32,
     pub floor_margin: f32,
     pub face_camera: bool,
+    pub no_void: bool,
+    pub boost_enabled: bool,
+    pub boost_keybind: String,
 }
 
 impl FlySettings {
@@ -43,6 +45,9 @@ impl FlySettings {
             boost_power: number(values, "boost_power", 4.0).max(0.0) as f32,
             floor_margin: number(values, "floor_margin", 10.0).max(0.0) as f32,
             face_camera: boolean(values, "face_camera", true),
+            no_void: boolean(values, "no_void", true),
+            boost_enabled: boolean(values, "boost_enabled", true),
+            boost_keybind: text(values, "boost_keybind", "Q"),
         }
     }
 
@@ -71,6 +76,9 @@ impl FlyCheat {
                 boost_power: 4.0,
                 floor_margin: 10.0,
                 face_camera: true,
+                no_void: true,
+                boost_enabled: true,
+                boost_keybind: "Q".to_string(),
             }),
             last_camera_refresh: Mutex::new(Instant::now()),
         }
@@ -93,7 +101,7 @@ impl TickedCheat for FlyCheat {
     }
 
     fn description(&self) -> &'static str {
-        "Fly with WASD, Space and Ctrl. Hold Q to accelerate."
+        "Fly with WASD, Space and Ctrl. Hold the boost key to accelerate."
     }
 
     fn meta(&self) -> &TickedMeta {
@@ -108,13 +116,19 @@ impl TickedCheat for FlyCheat {
 
     fn on_start(&self, roblox: &Arc<Roblox>, values: &Value) -> Result<(), String> {
         let settings = FlySettings::from_values(values);
-        let session = FlySession::start(roblox, settings.floor_margin, settings.face_camera)?;
+        let session = FlySession::start(
+            roblox,
+            settings.floor_margin,
+            settings.face_camera,
+            settings.no_void,
+        )?;
 
         log::info!(
             target: "GamingChairLLC.fly",
-            "Fly on (floor {:.1}, face_camera {})",
+            "Fly on (floor {:.1}, face_camera {}, no_void {})",
             session.min_y(),
-            settings.face_camera
+            settings.face_camera,
+            settings.no_void
         );
 
         *self.settings.lock() = settings;
@@ -142,15 +156,23 @@ impl TickedCheat for FlyCheat {
 
         let focused = process::foreground_pid() == Some(roblox.pid()) && !roblox.is_chat_focused();
 
+        let settings = self.settings.lock().clone();
+
+        // The boost key is only listened for while the Boost row is enabled;
+        // that switch says "this is allowed", not "currently boosting".
+        let boost = settings.boost_enabled
+            && vk_from_label(&settings.boost_keybind)
+                .map(key_down)
+                .unwrap_or(false);
+
         let input = MovementInput {
             forward: axis(VK_W, VK_S),
             right: axis(VK_A, VK_D),
             up: axis(VK_SPACE, VK_CTRL),
-            boost: key_down(VK_Q),
+            boost,
         };
 
-        let settings = self.settings.lock().movement();
-        session.step_movement(input, settings, focused, "fly");
+        session.step_movement(input, settings.movement(), focused, "fly");
     }
 
     fn on_values(&self, _roblox: &Arc<Roblox>, values: &Value) {
@@ -159,6 +181,7 @@ impl TickedCheat for FlyCheat {
         if let Some(session) = self.shared.get() {
             session.set_face_camera(settings.face_camera);
             session.set_safe_margin(settings.floor_margin);
+            session.set_no_void(settings.no_void);
         }
 
         *self.settings.lock() = settings;
@@ -193,7 +216,10 @@ pub fn default_values() -> Value {
         "keybind": "V",
         "speed": 1.0,
         "boost_power": 4.0,
+        "boost_enabled": true,
+        "boost_keybind": "Q",
         "floor_margin": 10.0,
+        "no_void": true,
         "face_camera": true,
     })
 }

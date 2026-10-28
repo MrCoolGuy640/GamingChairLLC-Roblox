@@ -1,0 +1,569 @@
+
+use derive_more::From;
+use enum_as_inner::EnumAsInner;
+use enum_dispatch::enum_dispatch;
+use formatter::Formatter;
+use itertools::Either;
+
+use std::{
+    fmt,
+    ops::{Deref, DerefMut},
+};
+
+mod assign;
+mod binary;
+mod boxed_statement;
+mod r#break;
+mod call;
+pub mod call_origins;
+pub mod node_origins;
+pub mod annotations;
+mod close;
+mod closure;
+pub mod closure_identity;
+mod r#continue;
+mod r#for;
+pub mod formatter;
+pub mod emission_map;
+mod global;
+mod goto;
+mod r#if;
+mod if_expression;
+mod index;
+mod literal;
+mod local;
+pub mod local_producers;
+//mod name_gen;
+pub mod canonicalize_branches;
+pub mod branch_constructors;
+pub mod cleanup_final;
+pub mod cleanup_returns;
+pub mod coalesce_locals;
+pub mod compact_conditionals;
+pub mod compound_bases;
+pub mod conditional_expressions;
+pub mod terminal_returns;
+pub mod copy_cleanup;
+pub mod deinline;
+pub mod fold_function_names;
+pub mod folded_captures;
+pub mod fold_import_callees;
+pub mod fold_tuple_copies;
+pub mod reconstruction_search;
+pub mod reconstruction_stats;
+mod deinline_safety;
+pub use deinline_safety::{library_import, ChunkGlobals};
+pub mod telemetry;
+pub mod dense;
+#[doc(hidden)]
+pub mod prof;
+pub mod eliminate_nil;
+pub mod expr_deinline;
+pub mod expression_budget;
+pub mod effects;
+mod numeric_facts;
+pub mod evaluation_order;
+pub mod factor_common_tails;
+pub mod flatten_guards;
+pub mod forward_declarations;
+pub mod fresh_closures;
+pub mod guard_exhaustion_adapters;
+pub mod inline_temps;
+pub mod local_declarations;
+pub mod lower_conditionals;
+pub mod materialize_call_receivers;
+pub mod materialize_value_captures;
+pub mod materialize_vectors;
+pub mod name_locals;
+pub(crate) mod name_spelling;
+pub mod naming_evidence;
+pub mod naming_api;
+pub mod refine_names;
+pub mod normalize_conditions;
+pub mod rebalance_expressions;
+pub mod rebuild_table_literals;
+pub mod recover_guard_continue;
+pub mod recover_methods;
+pub mod register_pressure;
+pub mod rehoist_constants;
+pub mod reroll_arithmetic;
+mod repeat;
+pub mod replace_locals;
+pub mod library_constants;
+pub mod link_upvalues;
+pub mod literal_sharing;
+mod r#return;
+mod select_value;
+mod set_list;
+mod side_effects;
+pub mod simplify_gotos;
+pub mod spell_constants;
+pub mod synthesize_terminal_helpers;
+mod table;
+mod traverse;
+pub mod type_system;
+mod unary;
+pub mod untruncate_arguments;
+mod vararg;
+mod r#while;
+
+pub use assign::*;
+pub use binary::*;
+pub use select_value::select_value;
+pub use r#break::*;
+pub use call::*;
+pub use close::*;
+pub use closure::*;
+pub use r#continue::*;
+pub use r#for::*;
+pub use global::*;
+pub use goto::*;
+pub use r#if::*;
+pub use if_expression::*;
+pub use index::*;
+pub use literal::*;
+pub use local::*;
+pub use repeat::*;
+pub use r#return::*;
+pub use set_list::*;
+pub use side_effects::*;
+pub use table::*;
+pub use traverse::*;
+use type_system::{Type, TypeSystem};
+pub use unary::*;
+pub use vararg::*;
+pub use r#while::*;
+
+/// Whether a diagnostic environment variable is set, read once per process.
+/// Hot per-function paths consult these switches; the environment is never
+/// modified while decompiling.
+#[macro_export]
+macro_rules! env_flag {
+    ($name:literal) => {{
+        static FLAG: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        *FLAG.get_or_init(|| std::env::var_os($name).is_some())
+    }};
+}
+
+/// Insertion-ordered map/set with the fast deterministic hasher. Iteration
+/// order is insertion order, independent of the hash function.
+pub type FxIndexMap<K, V> = indexmap::IndexMap<K, V, std::hash::BuildHasherDefault<rustc_hash::FxHasher>>;
+pub type FxIndexSet<K> = indexmap::IndexSet<K, std::hash::BuildHasherDefault<rustc_hash::FxHasher>>;
+
+pub trait Reduce {
+    fn reduce(self) -> RValue;
+    fn reduce_condition(self) -> RValue;
+}
+
+#[enum_dispatch(LocalRw, SideEffects, Traverse)]
+#[derive(Debug, Clone, PartialEq, EnumAsInner)]
+pub enum Select {
+    VarArg(VarArg),
+    Call(Call),
+    MethodCall(MethodCall),
+}
+
+/// `value` without a `Select`'s one-result adjustment, for a place that
+/// takes one value anyway (an operand) or passes it to a callee that drops
+/// the rest (a non-variadic helper's last argument).
+pub(crate) fn untruncated(value: RValue) -> RValue {
+    match value {
+        RValue::Select(Select::Call(call)) => RValue::Call(call),
+        RValue::Select(Select::MethodCall(call)) => RValue::MethodCall(call),
+        RValue::Select(Select::VarArg(vararg)) => RValue::VarArg(vararg),
+        value => value,
+    }
+}
+
+impl fmt::Display for Select {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Select::VarArg(var_arg) => write!(f, "{}", var_arg),
+            Select::Call(call) => write!(f, "{}", call),
+            Select::MethodCall(method_call) => write!(f, "{}", method_call),
+        }
+    }
+}
+
+#[enum_dispatch(LocalRw, SideEffects, Traverse)]
+#[derive(Debug, Clone, PartialEq, EnumAsInner)]
+pub enum RValue {
+    Local(RcLocal),
+    Global(Global),
+    Call(Call),
+    MethodCall(MethodCall),
+    VarArg(VarArg),
+    Table(Table),
+    Literal(Literal),
+    Index(Index),
+    Unary(Unary),
+    Binary(Binary),
+    Closure(Closure),
+    IfExpression(IfExpression),
+    Select(Select),
+}
+
+impl type_system::Infer for RValue {
+    fn infer<'a: 'b, 'b>(&'a mut self, system: &mut TypeSystem<'b>) -> Type {
+        match self {
+            RValue::Local(local) => local.infer(system),
+            RValue::Global(_) => Type::Any,
+            RValue::Call(_) => Type::Any,
+            //RValue::Table(table) => table.infer(system),
+            RValue::Literal(literal) => literal.infer(system),
+            RValue::Index(_) => Type::Any,
+            RValue::Unary(_) => Type::Any,
+            RValue::Binary(_) => Type::Any,
+            RValue::Closure(closure) => closure.infer(system),
+            RValue::IfExpression(_) => Type::Any,
+            _ => Type::VarArg,
+        }
+    }
+}
+
+impl<'a: 'b, 'b> Reduce for RValue {
+    fn reduce(self) -> RValue {
+        let origin = node_origins::value(&self).map(|o| o.snapshot());
+        let mut result = match self {
+            Self::Unary(unary) => unary.reduce(),
+            Self::Binary(binary) => binary.reduce(),
+            Self::Literal(literal) => literal.reduce(),
+            Self::Table(table) => table.reduce(),
+            Self::Closure(closure) => closure.reduce(),
+            Self::IfExpression(if_expression) => if_expression.reduce(),
+            other => other,
+        };
+        node_origins::inherit(&mut result, origin.as_ref());
+        result
+    }
+
+    fn reduce_condition(self) -> RValue {
+        let origin = node_origins::value(&self).map(|o| o.snapshot());
+        let mut result = match self {
+            Self::Unary(unary) => unary.reduce_condition(),
+            Self::Binary(binary) => binary.reduce_condition(),
+            Self::Literal(literal) => literal.reduce_condition(),
+            Self::Table(table) => table.reduce_condition(),
+            Self::Closure(closure) => closure.reduce_condition(),
+            Self::IfExpression(if_expression) => if_expression.reduce_condition(),
+            other => other,
+        };
+        node_origins::inherit(&mut result, origin.as_ref());
+        result
+    }
+}
+
+/// How deep inlining may nest an expression. An accumulation of thousands
+/// of single-use temps (`sum += n` per line) would otherwise fold into one
+/// tree too deep for the recursive passes after it (a stack overflow aborts
+/// the whole process), and far too long to read on one line.
+pub const MAX_INLINED_DEPTH: usize = 128;
+
+impl RValue {
+    /// Whether this expression nests deeper than `levels`. Walks no further
+    /// than that, so a deep tree costs no more to check than a shallow one;
+    /// a closure's body is a function of its own and does not count.
+    pub fn nests_deeper_than(&self, levels: usize) -> bool {
+        levels == 0 || !self.visit_rvalues(&mut |child| !child.nests_deeper_than(levels - 1))
+    }
+
+    pub fn precedence(&self) -> usize {
+        match self {
+            Self::Binary(binary) => binary.precedence(),
+            Self::Unary(unary) => unary.precedence(),
+            Self::IfExpression(_) => 0,
+            RValue::Literal(literal) if literal.prints_negated() => 7,
+            _ => 9,
+        }
+    }
+
+    pub fn into_lvalue(self) -> Option<LValue> {
+        match self {
+            Self::Local(local) => Some(LValue::Local(local)),
+            Self::Global(global) => Some(LValue::Global(global)),
+            Self::Index(index) => Some(LValue::Index(index)),
+            _ => None,
+        }
+    }
+}
+
+impl fmt::Display for RValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RValue::Local(local) => write!(f, "{}", local),
+            RValue::Global(global) => write!(f, "{}", global),
+            RValue::Literal(literal) => write!(f, "{}", literal),
+            RValue::Call(call) => write!(f, "{}", call),
+            RValue::MethodCall(method_call) => write!(f, "{}", method_call),
+            RValue::VarArg(var_arg) => write!(f, "{}", var_arg),
+            RValue::Table(table) => write!(f, "{}", table),
+            RValue::Index(index) => write!(f, "{}", index),
+            RValue::Unary(unary) => write!(f, "{}", unary),
+            RValue::Binary(binary) => write!(f, "{}", binary),
+            RValue::Closure(closure) => write!(f, "{}", closure),
+            RValue::IfExpression(if_expression) => write!(f, "{}", if_expression),
+            RValue::Select(select) => write!(f, "{}", select),
+        }
+    }
+}
+
+#[enum_dispatch(SideEffects, Traverse)]
+#[derive(Debug, Clone, PartialEq, EnumAsInner)]
+pub enum LValue {
+    Local(RcLocal),
+    Global(Global),
+    Index(Index),
+}
+
+impl LocalRw for LValue {
+    fn visit_local_reads<'a>(&'a self, visit: &mut dyn FnMut(&'a RcLocal) -> bool) -> bool {
+        match self {
+            LValue::Local(_) | LValue::Global(_) => true,
+            LValue::Index(index) => index.visit_local_reads(visit),
+        }
+    }
+
+    fn values_read(&self) -> Vec<&RcLocal> {
+        crate::local::collect_reads(self)
+    }
+
+    fn visit_local_reads_mut<'a>(&'a mut self, visit: &mut dyn FnMut(&'a mut RcLocal) -> bool) -> bool {
+        match self {
+            LValue::Local(_) | LValue::Global(_) => true,
+            LValue::Index(index) => index.visit_local_reads_mut(visit),
+        }
+    }
+
+    fn values_read_mut(&mut self) -> Vec<&mut RcLocal> {
+        crate::local::collect_reads_mut(self)
+    }
+
+    fn visit_local_writes<'a>(&'a self, visit: &mut dyn FnMut(&'a RcLocal) -> bool) -> bool {
+        match self {
+            LValue::Local(local) => visit(local),
+            LValue::Global(_) | LValue::Index(_) => true,
+        }
+    }
+
+    fn visit_local_writes_mut<'a>(&'a mut self, visit: &mut dyn FnMut(&'a mut RcLocal) -> bool) -> bool {
+        match self {
+            LValue::Local(local) => visit(local),
+            LValue::Global(_) | LValue::Index(_) => true,
+        }
+    }
+
+    fn values_written(&self) -> Vec<&RcLocal> {
+        match self {
+            LValue::Local(local) => vec![local],
+            LValue::Global(global) => global.values_written(),
+            LValue::Index(index) => index.values_written(),
+        }
+    }
+
+    fn values_written_mut(&mut self) -> Vec<&mut RcLocal> {
+        match self {
+            LValue::Local(local) => vec![local],
+            LValue::Global(global) => global.values_written_mut(),
+            LValue::Index(index) => index.values_written_mut(),
+        }
+    }
+}
+
+impl fmt::Display for LValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            LValue::Local(local) => write!(f, "{}", local),
+            LValue::Global(global) => write!(f, "{}", global),
+            LValue::Index(index) => write!(f, "{}", index),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Comment {
+    pub text: String,
+    /// When set, the formatter renders this comment on the SAME line as the
+    /// preceding statement (` -- text`) instead of on its own line. Used for
+    /// trailing annotations like the de-inliner's `inlined by Luau -O2` marker,
+    /// which reads best appended to the reconstructed call. Only meaningful for a
+    /// comment that follows a single-line statement; a leading comment (the
+    /// default) keeps its own line.
+    pub trailing: bool,
+    /// A hot comment such as `--!native`, written with no space after `--`
+    /// (the compiler reads `-- !native` as an ordinary comment).
+    pub hot: bool,
+}
+
+impl Comment {
+    pub fn new(text: String) -> Self {
+        Self {
+            text,
+            trailing: false,
+            hot: false,
+        }
+    }
+
+    /// The hot comment `--!name`, which belongs before any statement.
+    pub fn hot(name: &str) -> Self {
+        Self {
+            text: format!("!{name}"),
+            trailing: false,
+            hot: true,
+        }
+    }
+
+    /// A comment rendered on the same line as the statement it follows.
+    pub fn trailing(text: String) -> Self {
+        Self {
+            text,
+            trailing: true,
+            hot: false,
+        }
+    }
+}
+
+impl Traverse for Comment {}
+
+impl SideEffects for Comment {}
+
+impl LocalRw for Comment {}
+
+#[enum_dispatch(LocalRw, SideEffects, Traverse)]
+#[derive(Debug, Clone, PartialEq, EnumAsInner)]
+pub enum Statement {
+    Empty(Empty),
+    Call(Call),
+    MethodCall(MethodCall),
+    Assign(Assign),
+    If(If),
+    Goto(Goto),
+    Label(Label),
+    While(While),
+    Repeat(Repeat),
+    NumForInit(Box<NumForInit>),
+    NumForNext(Box<NumForNext>),
+    NumericFor(Box<NumericFor>),
+    GenericForInit(GenericForInit),
+    GenericForNext(Box<GenericForNext>),
+    GenericFor(GenericFor),
+    Return(Return),
+    Continue(Continue),
+    Break(Break),
+    Close(Close),
+    SetList(SetList),
+    Comment(Comment),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Empty {}
+
+impl SideEffects for Empty {}
+
+impl LocalRw for Empty {}
+
+impl Traverse for Empty {}
+
+impl fmt::Display for Empty {
+    fn fmt(&self, _: &mut fmt::Formatter) -> fmt::Result {
+        Ok(())
+    }
+}
+
+impl fmt::Display for Comment {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.hot {
+            write!(f, "--{}", self.text)
+        } else {
+            write!(f, "-- {}", self.text)
+        }
+    }
+}
+
+impl fmt::Display for Statement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            // TODO: STYLE: order in same order as `Statement` enum
+            Statement::Call(call) => write!(f, "{}", call),
+            Statement::MethodCall(method_call) => write!(f, "{}", method_call),
+            Statement::Assign(assign) => write!(f, "{}", assign),
+            // TODO: STYLE: replace all `if_` with `r#if`, etc
+            Statement::If(if_) => write!(f, "{}", if_),
+            Statement::Goto(goto) => write!(f, "{}", goto),
+            Statement::Label(label) => write!(f, "{}", label),
+            Statement::While(while_) => write!(f, "{}", while_),
+            Statement::Repeat(repeat) => write!(f, "{}", repeat),
+            Statement::NumForInit(num_for_init) => write!(f, "{}", num_for_init),
+            Statement::NumForNext(num_for_next) => write!(f, "{}", num_for_next),
+            Statement::NumericFor(numeric_for) => write!(f, "{}", numeric_for),
+            Statement::GenericForInit(generic_for_init) => write!(f, "{}", generic_for_init),
+            Statement::GenericForNext(generic_for_next) => write!(f, "{}", generic_for_next),
+            Statement::GenericFor(generic_for) => write!(f, "{}", generic_for),
+            Statement::Return(return_) => write!(f, "{}", return_),
+            Statement::Continue(continue_) => write!(f, "{}", continue_),
+            Statement::Break(break_) => write!(f, "{}", break_),
+            Statement::Comment(comment) => write!(f, "{}", comment),
+            Statement::SetList(setlist) => write!(f, "{}", setlist),
+            Statement::Close(close) => write!(f, "{}", close),
+            Statement::Empty(empty) => write!(f, "{}", empty),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Default, From)]
+pub struct Block(pub Vec<Statement>);
+
+// rust-analyzer doesnt like derive_more :/
+impl Deref for Block {
+    type Target = Vec<Statement>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Block {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Block {
+    /// Whether `predicate` holds for a statement of this function body,
+    /// including nested control-flow blocks but not nested closure bodies.
+    pub fn any_statement(&self, predicate: &mut impl FnMut(&Statement) -> bool) -> bool {
+        self.0.iter().any(|statement| {
+            predicate(statement)
+                || match statement {
+                    Statement::If(node) => {
+                        node.then_block.lock().any_statement(predicate)
+                            || node.else_block.lock().any_statement(predicate)
+                    }
+                    Statement::While(node) => node.block.lock().any_statement(predicate),
+                    Statement::Repeat(node) => node.block.lock().any_statement(predicate),
+                    Statement::NumericFor(node) => node.block.lock().any_statement(predicate),
+                    Statement::GenericFor(node) => node.block.lock().any_statement(predicate),
+                    _ => false,
+                }
+        })
+    }
+
+    /// Like [`Block::any_statement`], also searching every nested closure body.
+    pub fn any_statement_deep(&self, predicate: &mut impl FnMut(&Statement) -> bool) -> bool {
+        fn closures_any(value: &RValue, predicate: &mut impl FnMut(&Statement) -> bool) -> bool {
+            if let RValue::Closure(closure) = value {
+                return closure.function.lock().body.any_statement_deep(predicate);
+            }
+            !value.visit_rvalues(&mut |child| !closures_any(child, predicate))
+        }
+        self.any_statement(&mut |statement| {
+            predicate(statement)
+                || !crate::deinline::visit_stmt_rvalues(statement, &mut |value| !closures_any(value, predicate))
+        })
+    }
+}
+
+impl fmt::Display for Block {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Formatter::format(self, f, Default::default())
+    }
+}

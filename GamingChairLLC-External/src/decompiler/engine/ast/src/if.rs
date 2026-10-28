@@ -1,0 +1,97 @@
+use parking_lot::Mutex;
+use triomphe::Arc;
+
+use crate::{LocalRw, RcLocal, SideEffects, Traverse, formatter::Formatter};
+
+use super::{Block, RValue};
+
+use std::fmt;
+
+#[derive(Clone)]
+pub struct If {
+    pub node_origin: crate::node_origins::Origin,
+    pub condition: RValue,
+    pub then_block: Arc<Mutex<Block>>,
+    pub else_block: Arc<Mutex<Block>>,
+}
+
+impl PartialEq for If {
+    fn eq(&self, _other: &Self) -> bool {
+        // TODO: compare block
+        false
+    }
+}
+
+impl If {
+    pub fn new(condition: RValue, then_block: Block, else_block: Block) -> Self {
+        Self {
+            node_origin: Default::default(),
+            condition,
+            then_block: Arc::new(then_block.into()),
+            else_block: Arc::new(else_block.into()),
+        }
+    }
+}
+
+impl Traverse for If {
+    fn visit_rvalues<'a>(&'a self, visit: &mut dyn FnMut(&'a crate::RValue) -> bool) -> bool {
+        visit(&self.condition)
+    }
+
+    fn visit_rvalues_mut<'a>(&'a mut self, visit: &mut dyn FnMut(&'a mut crate::RValue) -> bool) -> bool {
+        visit(&mut self.condition)
+    }
+
+    fn rvalues_mut(&mut self) -> Vec<&mut RValue> {
+        vec![&mut self.condition]
+    }
+
+    fn rvalues(&self) -> Vec<&RValue> {
+        vec![&self.condition]
+    }
+}
+
+impl SideEffects for If {
+    // TODO: side effects for blocks
+    fn has_side_effects(&self) -> bool {
+        true
+    }
+}
+
+impl LocalRw for If {
+    fn visit_local_reads<'a>(&'a self, visit: &mut dyn FnMut(&'a RcLocal) -> bool) -> bool {
+        self.condition.visit_local_reads(visit)
+    }
+
+    fn values_read(&self) -> Vec<&RcLocal> {
+        crate::local::collect_reads(self)
+    }
+
+    fn visit_local_reads_mut<'a>(&'a mut self, visit: &mut dyn FnMut(&'a mut RcLocal) -> bool) -> bool {
+        self.condition.visit_local_reads_mut(visit)
+    }
+
+    fn values_read_mut(&mut self) -> Vec<&mut RcLocal> {
+        crate::local::collect_reads_mut(self)
+    }
+}
+
+impl fmt::Display for If {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Formatter {
+            indentation_level: 0,
+            indentation_mode: Default::default(),
+            output: f,
+            colon_method_calls: Default::default(),
+            position_query: None,
+            closure_observer: None,
+            emission_map: None,
+            layout_budget: None,
+            compact_annotations: false,
+            inferred_calls: Default::default(),
+        }
+        .format_if(self)
+    }
+}
+
+crate::node_origins::semantic_debug!(If; condition,then_block,else_block);

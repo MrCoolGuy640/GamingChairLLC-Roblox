@@ -92,6 +92,9 @@ pub struct FlySession {
 
     kill_y: f32,
     min_y: Mutex<f32>,
+    /// When off, `abs_pos` is never clamped and the player may fall into the
+    /// void. The clamp itself is unchanged; this only decides whether it runs.
+    no_void: AtomicBool,
     face_camera: AtomicBool,
     /// Fling owns the character's rotation (tumbling and standing up), so the
     /// camera-facing COPY slot stands down for the whole of it.
@@ -113,6 +116,7 @@ impl FlySession {
         roblox: &Arc<Roblox>,
         safe_margin: f32,
         face_camera: bool,
+        no_void: bool,
     ) -> Result<Arc<Self>, String> {
         let root = roblox
             .get_local_root_part()
@@ -166,6 +170,7 @@ impl FlySession {
             position_owner: Mutex::new(None),
             kill_y,
             min_y: Mutex::new(min_y),
+            no_void: AtomicBool::new(no_void),
             face_camera: AtomicBool::new(face_camera),
             rotation_claimed: AtomicBool::new(false),
             standup_gen: AtomicU64::new(0),
@@ -217,6 +222,12 @@ impl FlySession {
         }
     }
 
+    /// Turn the floor clamp on or off. It takes effect on the next position
+    /// write, so switching it back on never yanks the player upwards.
+    pub fn set_no_void(&self, enabled: bool) {
+        self.no_void.store(enabled, Ordering::Release);
+    }
+
     // -- the pinned position --------------------------------------------
 
     pub fn abs_pos(&self) -> Option<Vector3> {
@@ -225,8 +236,14 @@ impl FlySession {
 
     /// Every position written into the session passes through here, so a
     /// feature cannot forget to clamp and Sweep landing on a player who is
-    /// themselves below the floor is covered for free.
+    /// themselves below the floor is covered for free. With **No Void** off the
+    /// clamp is skipped entirely and the player may drop into the void.
     pub fn set_abs_pos(&self, value: Option<Vector3>) {
+        if !self.no_void.load(Ordering::Acquire) {
+            *self.abs_pos.lock() = value;
+            return;
+        }
+
         let min_y = *self.min_y.lock();
         let value = match value {
             Some(value) if value.is_finite() && value.y < min_y => {

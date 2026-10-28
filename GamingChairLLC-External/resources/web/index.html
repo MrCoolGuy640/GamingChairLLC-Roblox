@@ -105,6 +105,13 @@
               </div>
               <div class="control-row">
                 <div class="control-text">
+                  <span class="control-title">WalkSpeed Keybind</span>
+                  <span class="control-desc">Toggle WalkSpeed in game. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="walkspeedKeybindBtn" data-cheat="walkspeed" type="button">None</button>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
                   <span class="control-title">WalkSpeed Value</span>
                   <span class="control-desc">Set the walk speed (default 16, max 500).</span>
                 </div>
@@ -112,13 +119,6 @@
                   <input type="range" class="slider" id="walkspeedSlider" min="0" max="500" value="16" step="1">
                   <input type="number" class="slider-input" id="walkspeedInput" min="0" max="500" value="16">
                 </div>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">WalkSpeed Keybind</span>
-                  <span class="control-desc">Toggle WalkSpeed in game. Backspace clears.</span>
-                </div>
-                <button class="keybind-btn cheat-keybind" id="walkspeedKeybindBtn" data-cheat="walkspeed" type="button">None</button>
               </div>
             </div>
           </div>
@@ -156,12 +156,46 @@
               <div class="control-row" id="flyEnabledRow">
                 <div class="control-text">
                   <span class="control-title">Fly Enabled</span>
-                  <span class="control-desc">Freeze in place and move with WASD, Space and Ctrl. Hold Q to accelerate.</span>
+                  <span class="control-desc">Freeze in place and move with WASD, Space and Ctrl.</span>
                 </div>
                 <label class="toggle">
                   <input type="checkbox" class="cheat-toggle" data-cheat="fly">
                   <span class="toggle-track"><span class="toggle-thumb"></span></span>
                 </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Fly Keybind</span>
+                  <span class="control-desc">Toggle Fly in game. Locked while Fling is on. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="flyKeybindBtn" data-cheat="fly" type="button">None</button>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Boost Enabled</span>
+                  <span class="control-desc">Allow the boost key to be listened for while flying. Does not boost on its own.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-option" data-cheat="fly" data-value="boost_enabled" checked>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row" data-visible-when="fly.boost_enabled">
+                <div class="control-text">
+                  <span class="control-title">Boost Keybind</span>
+                  <span class="control-desc">Hold this key while flying to accelerate. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="flyBoostKeybindBtn" data-cheat="fly" data-value="boost_keybind" type="button">None</button>
+              </div>
+              <div class="control-row" data-visible-when="fly.boost_enabled">
+                <div class="control-text">
+                  <span class="control-title">Boost Power</span>
+                  <span class="control-desc">Exponent for the boost ramp. 4.0 is the original.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="fly" data-value="boost_power">
+                  <input type="range" class="slider" min="0" max="10" step="0.5" value="4">
+                  <input type="number" class="slider-input" min="0" max="10" step="0.5" value="4">
+                </div>
               </div>
               <div class="control-row">
                 <div class="control-text">
@@ -175,15 +209,15 @@
               </div>
               <div class="control-row">
                 <div class="control-text">
-                  <span class="control-title">Boost Power</span>
-                  <span class="control-desc">Exponent for the Q boost ramp. 4.0 is the original.</span>
+                  <span class="control-title">No Void</span>
+                  <span class="control-desc">Clamp flight above the kill plane so you cannot fall into the void.</span>
                 </div>
-                <div class="slider-control cheat-slider" data-cheat="fly" data-value="boost_power">
-                  <input type="range" class="slider" min="0" max="10" step="0.5" value="4">
-                  <input type="number" class="slider-input" min="0" max="10" step="0.5" value="4">
-                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-option" data-cheat="fly" data-value="no_void" checked>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
               </div>
-              <div class="control-row">
+              <div class="control-row" data-visible-when="fly.no_void">
                 <div class="control-text">
                   <span class="control-title">Floor Margin</span>
                   <span class="control-desc">How far above Roblox's kill plane the clamp sits.</span>
@@ -202,13 +236,6 @@
                   <input type="checkbox" class="cheat-option" data-cheat="fly" data-value="face_camera" checked>
                   <span class="toggle-track"><span class="toggle-thumb"></span></span>
                 </label>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Fly Keybind</span>
-                  <span class="control-desc">Toggle Fly in game. Locked while Fling is on. Backspace clears.</span>
-                </div>
-                <button class="keybind-btn cheat-keybind" id="flyKeybindBtn" data-cheat="fly" type="button">None</button>
               </div>
             </div>
           </div>
@@ -230,16 +257,6 @@
               </div>
               <div class="control-row">
                 <div class="control-text">
-                  <span class="control-title">Fling Speed</span>
-                  <span class="control-desc">Spin strength. 1000 is the good folder's default.</span>
-                </div>
-                <div class="slider-control cheat-slider" data-cheat="fling" data-value="speed">
-                  <input type="range" class="slider" min="100" max="2000" step="50" value="1000">
-                  <input type="number" class="slider-input" min="100" max="2000" step="50" value="1000">
-                </div>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
                   <span class="control-title">Fling Keybind</span>
                   <span class="control-desc">Toggle Fling in game. Backspace clears.</span>
                 </div>
@@ -247,13 +264,13 @@
               </div>
               <div class="control-row">
                 <div class="control-text">
-                  <span class="control-title">Sweep Enabled</span>
-                  <span class="control-desc">Teleport to each other player in turn, then back. Turns Fly on automatically.</span>
+                  <span class="control-title">Fling Speed</span>
+                  <span class="control-desc">Spin strength. 1000 is the good folder's default. Type any value; the slider preview stops at 2000.</span>
                 </div>
-                <label class="toggle">
-                  <input type="checkbox" class="cheat-toggle" data-cheat="sweep">
-                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                </label>
+                <div class="slider-control cheat-slider" data-cheat="fling" data-value="speed" data-free-input>
+                  <input type="range" class="slider" min="100" max="2000" step="50" value="1000">
+                  <input type="number" class="slider-input" min="100" step="50" value="1000">
+                </div>
               </div>
               <div class="control-row">
                 <div class="control-text">
@@ -297,6 +314,13 @@
                   <input type="checkbox" class="cheat-toggle" data-cheat="aim">
                   <span class="toggle-track"><span class="toggle-thumb"></span></span>
                 </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Aim Assist Keybind</span>
+                  <span class="control-desc">Toggle Aim Assist in game. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="aimKeybindBtn" data-cheat="aim" type="button">None</button>
               </div>
               <div class="control-row">
                 <div class="control-text">
@@ -357,13 +381,6 @@
                   <option value="head">Head</option>
                   <option value="root">HumanoidRootPart</option>
                 </select>
-              </div>
-              <div class="control-row">
-                <div class="control-text">
-                  <span class="control-title">Aim Assist Keybind</span>
-                  <span class="control-desc">Toggle Aim Assist in game. Backspace clears.</span>
-                </div>
-                <button class="keybind-btn cheat-keybind" id="aimKeybindBtn" data-cheat="aim" type="button">None</button>
               </div>
             </div>
           </div>

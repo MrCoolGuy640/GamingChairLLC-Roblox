@@ -36,6 +36,30 @@
    blocks sit flush against each other. */
 .section-block + .section-block { margin-top: 22px; }
 
+/* Once the window is wide enough, pages with more than one section lay those
+   sections out side by side instead of stacking them. Each block still spans
+   the full window until this breakpoint; past it they share it evenly.
+   `:has()` keeps single-section pages (Combat, Games, Settings) at full width. */
+@media (min-width: 1180px) {
+  .view.is-active:has(> .section-block + .section-block) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 22px;
+    row-gap: 22px;
+    align-items: start;
+    max-width: 1520px;
+  }
+
+  .view.is-active:has(> .section-block + .section-block) > .page-header {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+  }
+
+  .view.is-active:has(> .section-block + .section-block) > .section-block + .section-block {
+    margin-top: 0;
+  }
+}
+
 /* ---------------------------------------------
    Profile bar (Settings)
 --------------------------------------------- */

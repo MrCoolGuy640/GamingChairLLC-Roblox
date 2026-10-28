@@ -122,6 +122,11 @@ WebView2 must be present there as well (see Requirements).
 
 The status bar shows the app version/build and the attach state.
 
+On a wide window (about 1180 px and up) the **Global** page lays its cheat
+cards out in two columns so more fits on screen; below that they stack in one
+full-width column. Pages with a single card (Combat, Games, Settings) always
+use the full width.
+
 ### Profiles
 
 The **Profile** bar at the top of the Settings page stores the *values* of your
@@ -141,22 +146,28 @@ both the selection and the control values.
 ### Fly, Fling, Sweep and Aim Assist
 
 **Global → Fly** pins the character in place and moves it with `WASD`, `Space`
-and `Ctrl`. Hold `Q` to accelerate; the ramp is raised to `Boost Power`. Speed,
-floor margin and camera-facing are adjustable, and every position Fly writes is
-clamped above the place's kill plane. The default bind is `V`.
+and `Ctrl`. **Boost** has its own switch and keybind (`Q` by default): while the
+switch is on, holding that key during flight accelerates, with the ramp raised
+to `Boost Power`. **No Void** is on by default and clamps every position Fly
+writes above the place's kill plane; turning it off hides `Floor Margin` and
+lets you drop into the void. Speed, floor margin and camera-facing are
+adjustable. The default Fly bind is `V`.
 
 **Global → Fling** tumbles the character on random angular velocity. Turning it
 on turns Fly on automatically, and while Fling is on the Fly switch and keybind
 are locked (the backend refuses to turn Fly off too). Turning Fling off stops
 the tumble, zeroes the limbs and stands the character back up at the yaw it was
-facing, without releasing the Fly freeze until it is upright. The default bind
-is `E`.
+facing, without releasing the Fly freeze until it is upright. `Fling Speed`
+slider stops at `2000`, but the number box accepts any larger value (for
+example `100000`) and the app uses exactly what you typed. The default bind is
+`E`.
 
-**Global → Fling → Sweep** teleports to every other player in turn, waits
-`Dwell` seconds on each, then returns to where the sweep started. It also turns
-Fly on and claims the position channel, so `WASD` cannot fight the teleport.
-Sweep is one-shot: it switches itself off after the last player. The default
-bind is `R`.
+**Sweep** is part of Fling and has no switch of its own: its keybind starts and
+stops a sweep. It teleports to every other player in turn, waits `Dwell`
+seconds on each, then returns to where the sweep started. It also turns Fly on
+and claims the position channel, so `WASD` cannot fight the teleport. Sweep is
+one-shot: it switches itself off after the last player. The default bind is
+`R`.
 
 **Combat → Aim Assist** eases the camera onto the nearest other player instead
 of snapping to them. `Smoothing` is a time constant in seconds (`0` is
@@ -224,8 +235,8 @@ A profile file looks like this:
   "cheats": {
     "walkspeed": { "speed": 16, "keybind": "F1" },
     "noclip": { "keybind": "F2" },
-    "fly": { "keybind": "V", "speed": 1, "boost_power": 4, "floor_margin": 10, "face_camera": true },
-    "fling": { "keybind": "E", "speed": 1000 },
+    "fly": { "keybind": "V", "speed": 1, "boost_power": 4, "boost_enabled": true, "boost_keybind": "Q", "floor_margin": 10, "no_void": true, "face_camera": true },
+    "fling": { "keybind": "E", "speed": 1000, "stop_frames": 10, "settle_timeout": 15, "stabilize_camera": true },
     "sweep": { "keybind": "R", "dwell": 0.5 },
     "aim": { "keybind": "C", "smoothing": 0.08, "strength": 1, "stickiness": 0.15, "screen_mode": true, "radius": 150, "aim_part": "head" }
   }

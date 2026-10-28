@@ -1,0 +1,48 @@
+[package]
+name = "tovek-ast"
+version = "2.6.1"
+description = "Tovek decompiler: AST and passes (vendored, see ../../NOTICE.md)."
+edition = "2024"
+rust-version = "1.95"
+authors = [
+    "Mathias Pedersen <mathias.pedersen834@gmail.com>",
+    "Jujhar Singh <jujharsmc@gmail.com>",
+    "Amit Bashan <amit.bashan@icloud.com>",
+]
+license = "MIT"
+publish = false
+
+[lib]
+name = "ast"
+path = "src/lib.rs"
+test = false
+doctest = false
+bench = false
+
+# These crates are vendored third-party code: keep their warnings out of the
+# host project's build output.
+[lints.rust]
+warnings = "allow"
+
+[features]
+reference-temp-census = []
+deinline_trace = []
+byte-storage-trace = []
+phase-allocation-trace = []
+
+[dependencies]
+derive_more = "0.99.17"
+enum-as-inner = "0.5.1"
+itertools = "0.10.5"
+enum_dispatch = "0.3.8"
+by_address = "1.1.0"
+rustc-hash = "1.1.0"
+indexmap = "1.9.1"
+petgraph = { package = "tovek-petgraph", path = "../petgraph" }
+array_tool = "1.0.3"
+itoa = "1.0.4"
+ryu = "1.0.11"
+nohash-hasher = "0.2.0"
+triomphe = "0.1.8"
+parking_lot = "0.12.1"
+serde = { version = "1", features = ["derive", "rc"] }

@@ -1,0 +1,50 @@
+[package]
+name = "tovek"
+version = "2.6.1"
+description = "Tovek Luau decompiler as an embeddable library (the upstream `luau-lifter` library crate plus an `embed` API)."
+edition = "2024"
+rust-version = "1.95"
+authors = [
+    "Mathias Pedersen <mathias.pedersen834@gmail.com>",
+    "Jujhar Singh <jujharsmc@gmail.com>",
+    "Amit Bashan <amit.bashan@icloud.com>",
+]
+license = "MIT"
+publish = false
+
+[lib]
+name = "tovek"
+path = "src/lib.rs"
+test = false
+doctest = false
+bench = false
+
+# These crates are vendored third-party code: keep their warnings out of the
+# host project's build output.
+[lints.rust]
+warnings = "allow"
+
+[features]
+panic-handled = []
+allocation-counts = []
+byte-storage-trace = ["ast/byte-storage-trace"]
+phase-allocation-trace = ["ast/phase-allocation-trace"]
+
+[dependencies]
+num_enum = "0.5.6"
+nom = "7.1.0"
+nom-leb128 = "0.2.0"
+anyhow = { version = "1.0.53", features = ["backtrace"] }
+cfg = { package = "tovek-cfg", path = "../cfg" }
+ast = { package = "tovek-ast", path = "../ast" }
+restructure = { package = "tovek-restructure", path = "../restructure" }
+petgraph = { package = "tovek-petgraph", path = "../petgraph" }
+rustc-hash = "1.1.0"
+itertools = "0.10.5"
+by_address = "1.1.0"
+rayon = "1.5.3"
+triomphe = "0.1.8"
+parking_lot = "0.12.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+sha2 = "0.10"

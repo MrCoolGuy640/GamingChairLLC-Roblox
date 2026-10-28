@@ -54,6 +54,48 @@
   }
 
   // ---------------------------------------------
+  // Conditional rows  data-visible-when="cheat.field"
+  //
+  // The row is shown while that option is ON. Used by Fly's Boost rows
+  // (boost_enabled) and Floor Margin (no_void).
+  // ---------------------------------------------
+  function optionElement(name, field) {
+    const option = document.querySelector(
+      `.cheat-option[data-cheat="${name}"][data-value="${field}"],` +
+        `.cheat-select[data-cheat="${name}"][data-value="${field}"]`
+    );
+    if (option) return option;
+
+    // A boolean cheat toggle with no explicit field.
+    if (field === "enabled") {
+      return document.querySelector(`.cheat-toggle[data-cheat="${name}"]`);
+    }
+
+    return null;
+  }
+
+  function conditionMet(spec) {
+    const parts = String(spec || "").split(".");
+    if (parts.length !== 2) return true;
+
+    const element = optionElement(parts[0], parts[1]);
+    if (!element) return true;
+
+    if (element.type === "checkbox") return !!element.checked;
+    return !!element.value && element.value !== "0" && element.value !== "false";
+  }
+
+  function applyVisibility(spec) {
+    const selector = spec
+      ? `[data-visible-when="${spec}"]`
+      : "[data-visible-when]";
+
+    document.querySelectorAll(selector).forEach((row) => {
+      row.hidden = !conditionMet(row.dataset.visibleWhen);
+    });
+  }
+
+  // ---------------------------------------------
   // Per-cheat control object (keybinds.js mirrors
   // backend state into it, profiles.js loads values)
   // ---------------------------------------------
@@ -109,6 +151,8 @@
               element.value = String(values[field]);
             }
           });
+
+        applyVisibility();
       },
     };
   }
@@ -187,10 +231,18 @@
   }
 
   document.querySelectorAll(".cheat-option").forEach((element) => {
-    element.addEventListener("change", () => saveOption(element, element.checked));
+    element.addEventListener("change", () => {
+      saveOption(element, element.checked);
+
+      const field = element.dataset.value;
+      if (field) applyVisibility(`${element.dataset.cheat}.${field}`);
+    });
   });
 
   document.querySelectorAll(".cheat-select").forEach((element) => {
     element.addEventListener("change", () => saveOption(element, element.value));
   });
+
+  // Initial pass: the HTML defaults decide what starts visible.
+  applyVisibility();
 })();

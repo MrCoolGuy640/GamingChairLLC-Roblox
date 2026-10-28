@@ -1,0 +1,30 @@
+[package]
+name = "tovek-petgraph"
+version = "0.6.3"
+description = "Vendored copy of the petgraph 0.6.3 fork (jujhar16/petgraph, branch ensure_len_resize_with, commit b40d963) that Tovek depends on."
+authors = ["bluss", "mitchmindtree"]
+license = "MIT OR Apache-2.0"
+edition = "2018"
+publish = false
+
+[lib]
+name = "petgraph"
+path = "src/lib.rs"
+bench = false
+test = false
+doctest = false
+
+[lints.rust]
+warnings = "allow"
+
+[dependencies]
+fixedbitset = { version = "0.4.0", default-features = false }
+indexmap = { version = "1.7", features = ["std"] }
+
+[features]
+default = ["graphmap", "stable_graph", "matrix_graph"]
+generate = []
+graphmap = []
+matrix_graph = []
+stable_graph = []
+unstable = ["generate"]

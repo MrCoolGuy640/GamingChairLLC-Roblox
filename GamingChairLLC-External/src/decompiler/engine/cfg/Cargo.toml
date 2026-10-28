@@ -1,0 +1,44 @@
+[package]
+name = "tovek-cfg"
+version = "2.6.1"
+description = "Tovek decompiler: control-flow graph and SSA (vendored, see ../../NOTICE.md)."
+edition = "2024"
+rust-version = "1.95"
+authors = [
+    "Mathias Pedersen <mathias.pedersen834@gmail.com>",
+    "Jujhar Singh <jujharsmc@gmail.com>",
+    "Amit Bashan <amit.bashan@icloud.com>",
+]
+license = "MIT"
+publish = false
+
+[lib]
+name = "cfg"
+path = "src/lib.rs"
+test = false
+doctest = false
+bench = false
+
+# These crates are vendored third-party code: keep their warnings out of the
+# host project's build output.
+[lints.rust]
+warnings = "allow"
+
+[features]
+reference-inline-sweeps = []
+
+[dependencies]
+thiserror = "1.0.37"
+enum_dispatch = "0.3.8"
+enum-as-inner = "0.5.1"
+petgraph = { package = "tovek-petgraph", path = "../petgraph" }
+indexmap = "1.9.1"
+ast = { package = "tovek-ast", path = "../ast" }
+dot = "0.1.4"
+rustc-hash = "1.1.0"
+itertools = "0.10.5"
+contracts = "0.6.3"
+hashlink = "0.8.1"
+array_tool = "1.0.3"
+rangemap = "1.0.3"
+tuple = "0.5.1"

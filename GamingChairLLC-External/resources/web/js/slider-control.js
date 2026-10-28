@@ -13,6 +13,11 @@
 //     when the number is COMMITTED: press Enter (leaves the box), click away,
 //     or Tab. Empty/invalid text snaps back to the last good value.
 //   * Values are clamped to min/max and snapped to the slider's step.
+//
+// `data-free-input` on the control opts out of the cap for the NUMBER BOX:
+// the typed value is used as-is (floored at 0) while the track and fill stay
+// clamped to min/max. Used by Fling Speed so 100000 is allowed even though the
+// slider stops at 2000.
 // ---------------------------------------------
 function wireSliderControl(control, { onChange } = {}) {
   const slider = control.querySelector(".slider");
@@ -22,26 +27,40 @@ function wireSliderControl(control, { onChange } = {}) {
   const min = parseFloat(slider.min) || 0;
   const max = parseFloat(slider.max) || 100;
   const step = parseFloat(slider.step) || 1;
+  const freeInput = control.hasAttribute("data-free-input");
+
+  // What the track and its fill show: always inside the slider's own range.
+  function clampToRange(v) {
+    if (!Number.isFinite(v)) return min;
+    return Math.min(max, Math.max(min, v));
+  }
 
   // Returns a clean in-range number, or null if `v` isn't a number.
   function normalize(v) {
     if (!Number.isFinite(v)) return null;
-    v = Math.min(max, Math.max(min, v));
+    v = clampToRange(v);
     v = Math.round((v - min) / step) * step + min;
-    v = Math.min(max, Math.max(min, v));
+    v = clampToRange(v);
     return Number(v.toFixed(6));
   }
 
+  // Free input: any positive number, not snapped and not capped at max.
+  function normalizeFree(v) {
+    if (!Number.isFinite(v)) return null;
+    return Number(Math.max(0, v).toFixed(6));
+  }
+
   function paintFill(v) {
-    const pct = ((v - min) / (max - min)) * 100;
+    const pct = ((clampToRange(v) - min) / (max - min)) * 100;
     slider.style.background =
       `linear-gradient(to right, var(--white-fill) ${pct}%, var(--bg-4) ${pct}%)`;
   }
 
   function show(v) {
-    slider.value = v;
+    const track = clampToRange(v);
+    slider.value = track;
     input.value = v;
-    paintFill(v);
+    paintFill(track);
   }
 
   let value = normalize(parseFloat(slider.value));
@@ -60,15 +79,17 @@ function wireSliderControl(control, { onChange } = {}) {
 
   // Typing: preview only (don't rewrite the text while the user is typing)
   input.addEventListener("input", () => {
-    const v = normalize(parseFloat(input.value));
+    const raw = parseFloat(input.value);
+    const v = freeInput ? normalizeFree(raw) : normalize(raw);
     if (v === null) return;
-    slider.value = v;
+    slider.value = clampToRange(v);
     paintFill(v);
   });
 
   // Commit: Enter / blur / change. Safe to run more than once in a row.
   function commit() {
-    let v = normalize(parseFloat(input.value));
+    const raw = parseFloat(input.value);
+    let v = freeInput ? normalizeFree(raw) : normalize(raw);
     if (v === null) v = value;
     show(v);
     if (v !== value) {
@@ -89,7 +110,7 @@ function wireSliderControl(control, { onChange } = {}) {
   return {
     get value() { return value; },
     set(v) {
-      const n = normalize(v);
+      const n = freeInput ? normalizeFree(v) : normalize(v);
       if (n === null) return;
       value = n;
       show(n);

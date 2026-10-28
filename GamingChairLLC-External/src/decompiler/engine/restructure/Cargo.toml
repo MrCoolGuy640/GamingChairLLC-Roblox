@@ -1,0 +1,34 @@
+[package]
+name = "tovek-restructure"
+version = "2.6.1"
+description = "Tovek decompiler: control-flow structuring (vendored, see ../../NOTICE.md)."
+edition = "2024"
+rust-version = "1.95"
+authors = [
+    "Mathias Pedersen <mathias.pedersen834@gmail.com>",
+    "Jujhar Singh <jujharsmc@gmail.com>",
+    "Amit Bashan <amit.bashan@icloud.com>",
+]
+license = "MIT"
+publish = false
+
+[lib]
+name = "restructure"
+path = "src/lib.rs"
+test = false
+doctest = false
+bench = false
+
+# These crates are vendored third-party code: keep their warnings out of the
+# host project's build output.
+[lints.rust]
+warnings = "allow"
+
+[dependencies]
+petgraph = { package = "tovek-petgraph", path = "../petgraph" }
+ast = { package = "tovek-ast", path = "../ast" }
+cfg = { package = "tovek-cfg", path = "../cfg" }
+rustc-hash = "1.1.0"
+itertools = "0.10.5"
+triomphe = "0.1.8"
+parking_lot = "0.12.1"
