@@ -116,7 +116,9 @@ WebView2 must be present there as well (see Requirements).
    DataModel is readable (up to 10 seconds).
 4. Use the **Global** page for WalkSpeed, NoClip, Fly, Fling and Sweep, the
    **Combat** page for Aim Assist, and the **Explorer** page to browse the
-   object tree and inspect properties.
+   object tree and inspect properties. Right-click a `ModuleScript` or
+   `LocalScript` there to dump or decompile it (see
+   [Script decompiler](#script-decompiler)).
 5. **Detach** (same button) restores any active cheat before closing the
    connection.
 
@@ -201,6 +203,30 @@ A press that happens while either condition fails is ignored. Keys are
 edge-triggered — holding one down toggles once. Toggling from a keybind updates
 the switch in the UI immediately.
 
+### Script decompiler
+
+The **Explorer** can dump and decompile the bytecode of any `ModuleScript` or
+`LocalScript`. Right-click such a row and pick one of:
+
+| Item | What it does |
+| --- | --- |
+| **Dump As…** | Decrypts the script's bytecode and asks where to save it (`.bin`). |
+| **Decompile As…** | Decompiles it in-process and asks where to save the Luau source (`.luau`). |
+| **Dump** | Same dump, written automatically to `Workspace\Dumps`. |
+| **Decompile** | Same decompile, written automatically to `Workspace\Decompiles`. |
+
+Automatic names are `<ScriptName>_<YYYY-MM-DD_HH-MM-SS>.bin` / `.luau`; a
+`_2`, `_3`, … suffix is added instead of overwriting an existing file. The
+result (or the reason it failed) appears as a toast in the bottom-right corner.
+
+A dump contains the decrypted, decompressed Luau bytecode — the same bytes the
+Python tool sends to lua.expert. Decompilation runs entirely inside the app
+(Tovek, vendored under `src/decompiler`); nothing is uploaded and no external
+service is contacted. Bytecode is read through `ScriptOffsets` in
+`src/sdk/offsets.rs`, which is currently hardcoded to the offsets the Python SDK
+uses (`0x120` for `ModuleScript`, `0x180` for `LocalScript`, then `+0x10` /
+`+0x20` inside the bytecode structure).
+
 ---
 
 ## Where your data lives
@@ -218,6 +244,9 @@ All writable data lives in one folder:
     last_checked_offsets.txt
   logs\
     gamingchairllc.log   rotating log file (about 2 MB × 3)
+  Workspace\
+    Dumps\               "Dump" output (decrypted Luau bytecode, .bin)
+    Decompiles\          "Decompile" output (reconstructed Luau source, .luau)
   webview\               WebView2 browser profile (cache, local storage)
 ```
 
@@ -262,8 +291,10 @@ src/
     worker.rs        always-on backend loop (ticked cheats)
     keybinds.rs      keybind polling, foreground/chat gates
     explorer.rs      instance-tree/properties queries
+    scripts.rs       "Dump"/"Decompile" actions + native save dialog
     state.rs         shared state between the UI and the loop
   cheats/            cheat implementations (WalkSpeed, NoClip, Fly, Fling, Sweep, Aim Assist)
+  decompiler/        vendored Tovek Luau decompiler (in-process)
   sdk/
     memory.rs        process memory access + memory freezer
     hyperion.rs      Hyperion thread blinding

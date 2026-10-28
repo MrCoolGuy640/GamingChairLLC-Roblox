@@ -16,6 +16,7 @@
 //! your `Cargo.toml`. This file only gives them a home inside your own module
 //! tree.
 
+#[allow(unused_imports)] // part of the module's public surface
 pub use tovek::embed::{
     DecompileError, Decompiler, DecompilerBuilder, EncodeKey, PLAIN_KEY, ROBLOX_KEY, decompile,
     decompile_roblox,
@@ -24,4 +25,5 @@ pub use tovek::embed::{
 /// Upstream Tovek's own low-level API (`DecompileOptions`,
 /// `try_decompile_bytecode_with_options`, `decompile_batch`, ...), for anything
 /// the friendlier API above does not cover.
+#[allow(unused_imports)] // part of the module's public surface
 pub use tovek as raw;

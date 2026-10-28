@@ -127,6 +127,38 @@ pub struct ChatOffsets {
     pub is_focused: u64,
 }
 
+/// Custom, hardcoded offsets for script bytecode.
+///
+/// These do **not** come from the offsets API: its bytecode section has been
+/// wrong for several client versions. They mirror the `CUSTOM_OFFSETS` table in
+/// `GamingChairLLC-Python/utils/roblox.py`:
+///
+/// * `ModuleScript` / `LocalScript` — offset on the instance that holds the
+///   pointer to its bytecode structure.
+/// * `bytecode_buffer` / `bytecode_size` — fields inside that structure.
+///
+/// When the app grows its own offsets API these become fields of a parsed
+/// section instead of constants; keeping them in one struct means only
+/// `Default` has to change.
+#[derive(Debug, Clone)]
+pub struct ScriptOffsets {
+    pub module_script_bytecode: u64,
+    pub local_script_bytecode: u64,
+    pub bytecode_buffer: u64,
+    pub bytecode_size: u64,
+}
+
+impl Default for ScriptOffsets {
+    fn default() -> Self {
+        Self {
+            module_script_bytecode: 0x120,
+            local_script_bytecode: 0x180,
+            bytecode_buffer: 0x10,
+            bytecode_size: 0x20,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Offsets {
     pub instance: InstanceOffsets,
@@ -141,6 +173,8 @@ pub struct Offsets {
     pub camera: CameraOffsets,
     pub workspace: WorkspaceOffsets,
     pub world: WorldOffsets,
+    /// Hardcoded bytecode offsets (see [`ScriptOffsets`]).
+    pub scripts: ScriptOffsets,
 }
 
 impl Offsets {
@@ -252,6 +286,7 @@ impl Offsets {
                     .unwrap_or(532),
                 gravity: number(world, "Gravity").unwrap_or(544),
             },
+            scripts: ScriptOffsets::default(),
         })
     }
 }

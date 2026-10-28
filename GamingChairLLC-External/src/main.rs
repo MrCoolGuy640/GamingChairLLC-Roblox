@@ -17,6 +17,8 @@ mod backend;
 mod bundle;
 mod cheats;
 mod config;
+// In-process Luau decompiler (vendored under `src/decompiler`).
+mod decompiler;
 mod events;
 mod logging;
 // The SDK deliberately mirrors the Python SDK's public surface; not every
@@ -33,6 +35,7 @@ use std::thread;
 use tao::dpi::LogicalSize;
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
+use tao::platform::windows::WindowExtWindows;
 use tao::window::{Theme, WindowBuilder};
 use wry::{WebContext, WebViewBuilder, WebViewBuilderExtWindows};
 
@@ -88,6 +91,10 @@ fn main() -> anyhow::Result<()> {
         .with_resizable(true)
         .with_theme(Some(Theme::Dark))
         .build(&event_loop)?;
+
+    // Native dialogs ("Dump As", "Decompile As") are parented to the window, so
+    // they cannot end up behind the app.
+    engine.set_window_handle(window.hwnd());
 
     let ipc_engine = Arc::clone(&engine);
     let ipc_proxy = proxy.clone();

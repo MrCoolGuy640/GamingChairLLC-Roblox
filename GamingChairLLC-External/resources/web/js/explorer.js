@@ -19,6 +19,9 @@
 const chevronPath = '<path d="M9 6l6 6-6 6"/>';
 const ICON_BASE = "/icons/roblox/whitescale";   // served by the local resource server
 
+// Objects that the decompiler can read bytecode from.
+const SCRIPT_CLASSES = new Set(["modulescript", "localscript"]);
+
 let selectedNodeAddress = null;
 
 // Hex address -> true for every branch that is currently expanded.
@@ -91,6 +94,64 @@ function mergeLookahead(target, lookahead) {
   for (const [address, children] of Object.entries(lookahead)) {
     target.set(addressKey(address), children || []);
   }
+}
+
+// ---------------------------------------------
+// Selection + script actions
+// ---------------------------------------------
+
+function isScriptNode(node) {
+  return SCRIPT_CLASSES.has((node.className || "").toLowerCase());
+}
+
+// Focus a row and fetch its properties. Shared by click and right-click so
+// the context menu always acts on the highlighted object.
+function selectRow(row, address) {
+  const previous = document.querySelector(".tree-row.is-selected");
+  if (previous) previous.classList.remove("is-selected");
+  row.classList.add("is-selected");
+  selectedNodeAddress = address;
+  syncRenderedKey();
+
+  host.call("get_properties", address).then(handleProperties);
+}
+
+// `method` is "dump_script" or "decompile_script"; `ask` opens the native save
+// dialog instead of writing to Workspace/<Dumps|Decompiles>.
+function runScriptAction(method, node, ask) {
+  const verb = method === "dump_script" ? "Dump" : "Decompile";
+  Toast.show(`${verb}ing ${node.name}…`, "info", 0);
+
+  host.call(method, node.address, ask).then((result) => {
+    if (result && result.success) {
+      Toast.show(`${verb} written to ${result.path}`, "success", 6000);
+    } else if (result && result.cancelled) {
+      Toast.clear();
+    } else {
+      Toast.show(
+        `${verb} failed: ${(result && result.error) || "unknown error"}`,
+        "error",
+        8000
+      );
+    }
+  });
+}
+
+function openScriptMenu(event, node) {
+  if (!isScriptNode(node)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const items = [
+    { label: "Dump As…", onSelect: () => runScriptAction("dump_script", node, true) },
+    { label: "Decompile As…", onSelect: () => runScriptAction("decompile_script", node, true) },
+    { separator: true },
+    { label: "Dump", onSelect: () => runScriptAction("dump_script", node, false) },
+    { label: "Decompile", onSelect: () => runScriptAction("decompile_script", node, false) },
+  ];
+
+  ContextMenu.show({ x: event.clientX, y: event.clientY, items });
 }
 
 // ---------------------------------------------
@@ -209,19 +270,22 @@ function renderNode(node, depth, lookahead, childrenMap, parentAddress) {
   row.addEventListener("click", (e) => {
     e.stopPropagation();
 
-    const previous = document.querySelector(".tree-row.is-selected");
-    if (previous) previous.classList.remove("is-selected");
-    row.classList.add("is-selected");
-    selectedNodeAddress = address;
-    syncRenderedKey();
-
-    host.call("get_properties", address).then(handleProperties);
+    selectRow(row, address);
     toggleExpand();
   });
 
   row.addEventListener("dblclick", (e) => {
     e.stopPropagation();
     toggleExpand();
+  });
+
+  // Script objects get the decompiler menu; everything else keeps the
+  // (disabled) browser default.
+  row.addEventListener("contextmenu", (e) => {
+    if (!isScriptNode(node)) return;
+
+    selectRow(row, address);
+    openScriptMenu(e, node);
   });
 
   return { wrapper, childContainer };

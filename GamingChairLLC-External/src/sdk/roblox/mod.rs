@@ -7,6 +7,7 @@ pub mod instance;
 pub mod math;
 pub mod part;
 pub mod player;
+pub mod script;
 pub mod utils;
 pub mod vector3;
 
@@ -14,4 +15,5 @@ pub use connection::Roblox;
 pub use humanoid::Humanoid;
 pub use instance::Instance;
 pub use part::Part;
+pub use script::Script;
 pub use vector3::Vector3;

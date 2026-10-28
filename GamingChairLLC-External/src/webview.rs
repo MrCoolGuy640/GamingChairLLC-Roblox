@@ -28,6 +28,8 @@ pub const INIT_SCRIPT: &str = r#"
     "get_explorer_children",
     "search_explorer",
     "get_properties",
+    "dump_script",
+    "decompile_script",
     "get_cheats",
     "toggle_cheat",
     "set_cheat_values"

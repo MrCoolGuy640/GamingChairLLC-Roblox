@@ -239,7 +239,7 @@ fn node(instance: &Instance, has_children: bool) -> Value {
     })
 }
 
-fn parse_address(address: &str) -> Option<u64> {
+pub(super) fn parse_address(address: &str) -> Option<u64> {
     let address = address.trim();
     if let Some(hex) = address
         .strip_prefix("0x")

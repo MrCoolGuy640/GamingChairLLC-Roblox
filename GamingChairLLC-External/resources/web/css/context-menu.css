@@ -1,0 +1,82 @@
+/* ---------------------------------------------
+   Context menu + toast
+   (shared components; see js/context-menu.js and js/toast.js)
+--------------------------------------------- */
+
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 184px;
+  padding: 4px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55);
+  animation: context-menu-in 0.1s ease;
+}
+
+@keyframes context-menu-in {
+  from { transform: translateY(-3px) scale(0.99); }
+  to { transform: none; }
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 30px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: var(--text-0);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.1s ease;
+}
+.context-menu-item:hover:not(:disabled),
+.context-menu-item:focus-visible {
+  background: var(--bg-4);
+  outline: none;
+}
+.context-menu-item:disabled {
+  color: var(--text-2);
+  cursor: default;
+}
+
+.context-menu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+
+/* ---------------------------------------------
+   Toast
+--------------------------------------------- */
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 44px;
+  z-index: 1100;
+  max-width: min(520px, calc(100vw - 36px));
+  padding: 10px 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--text-2);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  color: var(--text-0);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  animation: toast-in 0.16s ease;
+}
+@keyframes toast-in {
+  from { transform: translateY(6px); }
+  to { transform: none; }
+}
+.toast-success { border-left-color: var(--live); }
+.toast-error { border-left-color: var(--danger); }

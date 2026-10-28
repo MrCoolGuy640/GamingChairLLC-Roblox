@@ -4,6 +4,7 @@
 //! the backend loop. API calls arrive on worker threads and are serialised by
 //! `lock` where they mutate state; the backend loop never takes that lock.
 
+use std::sync::atomic::{AtomicIsize, Ordering};
 use std::sync::Arc;
 
 use parking_lot::Mutex;
@@ -16,6 +17,7 @@ use crate::sdk::offsets;
 use crate::sdk::roblox::Roblox;
 
 use super::explorer::Explorer;
+use super::scripts;
 use super::state::BackendState;
 use super::store::Store;
 use super::worker::BackendLoop;
@@ -29,6 +31,9 @@ pub struct Engine {
     paths: Paths,
     events: EventBus,
     lock: Mutex<()>,
+    /// HWND of the app window (0 until `main` sets it). Native dialogs are
+    /// parented to it. `isize` keeps the engine `Send + Sync`.
+    window_handle: AtomicIsize,
 }
 
 impl Engine {
@@ -61,7 +66,13 @@ impl Engine {
             paths,
             events,
             lock: Mutex::new(()),
+            window_handle: AtomicIsize::new(0),
         })
+    }
+
+    /// Store the app window's HWND so native dialogs can be parented to it.
+    pub fn set_window_handle(&self, hwnd: isize) {
+        self.window_handle.store(hwnd, Ordering::Relaxed);
     }
 
     // -- lifecycle -------------------------------------------------------
@@ -481,6 +492,40 @@ impl Engine {
         };
 
         self.explorer.properties(&roblox, address)
+    }
+
+    // -- scripts ---------------------------------------------------------
+
+    /// Write a script's decrypted bytecode to disk (`ask`: use a save dialog).
+    pub fn dump_script(&self, address: &str, ask: bool) -> Value {
+        self.script_action(address, scripts::Action::Dump, ask)
+    }
+
+    /// Decompile a script and write the Luau source (`ask`: use a save dialog).
+    pub fn decompile_script(&self, address: &str, ask: bool) -> Value {
+        self.script_action(address, scripts::Action::Decompile, ask)
+    }
+
+    fn script_action(&self, address: &str, action: scripts::Action, ask: bool) -> Value {
+        let Some(roblox) = self.attached_roblox() else {
+            return error("Not attached");
+        };
+
+        let hwnd = self.window_handle.load(Ordering::Relaxed);
+
+        match scripts::run(&roblox, address, action, ask, hwnd, &self.paths) {
+            Ok(scripts::Outcome::Written { path, bytes }) => json!({
+                "success": true,
+                "path": path.display().to_string(),
+                "bytes": bytes,
+            }),
+            Ok(scripts::Outcome::Cancelled) => json!({
+                "success": false,
+                "cancelled": true,
+                "error": "Cancelled",
+            }),
+            Err(err) => error(format!("{} failed: {err:#}", action.verb())),
+        }
     }
 
     fn attached_roblox(&self) -> Option<Arc<Roblox>> {

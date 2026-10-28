@@ -51,6 +51,9 @@ pub struct Paths {
     pub data_dir: PathBuf,
     pub offsets_cache: PathBuf,
     pub offsets_version_file: PathBuf,
+    /// User-visible output folders under `Workspace`.
+    pub dumps_dir: PathBuf,
+    pub decompiles_dir: PathBuf,
 }
 
 impl Paths {
@@ -59,11 +62,14 @@ impl Paths {
 
         let log_dir = app_data.join("logs");
         let data_dir = app_data.join("data");
+        let workspace_dir = app_data.join("Workspace");
 
         Self {
             log_file: log_dir.join("gamingchairllc.log"),
             offsets_cache: data_dir.join("offsets.json"),
             offsets_version_file: data_dir.join("last_checked_offsets.txt"),
+            dumps_dir: workspace_dir.join("Dumps"),
+            decompiles_dir: workspace_dir.join("Decompiles"),
             app_data,
             log_dir,
             data_dir,
@@ -76,6 +82,8 @@ impl Paths {
         std::fs::create_dir_all(&self.log_dir)?;
         std::fs::create_dir_all(&self.data_dir)?;
         std::fs::create_dir_all(self.app_data.join("profiles"))?;
+        std::fs::create_dir_all(&self.dumps_dir)?;
+        std::fs::create_dir_all(&self.decompiles_dir)?;
         Ok(())
     }
 }

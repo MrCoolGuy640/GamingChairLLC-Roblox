@@ -26,6 +26,10 @@ pub fn dispatch(engine: &Engine, method: &str, args: &[Value]) -> Value {
         "get_explorer_children" => engine.get_explorer_children(&string_arg(args, 0)),
         "search_explorer" => engine.search_explorer(&string_arg(args, 0)),
         "get_properties" => engine.get_properties(&string_arg(args, 0)),
+        "dump_script" => engine.dump_script(&string_arg(args, 0), bool_arg(args, 1, false)),
+        "decompile_script" => {
+            engine.decompile_script(&string_arg(args, 0), bool_arg(args, 1, false))
+        }
 
         "get_cheats" => engine.get_cheats(),
         "toggle_cheat" => engine.toggle_cheat(
@@ -53,4 +57,8 @@ fn string_arg(args: &[Value], index: usize) -> String {
         Some(value) => value.to_string(),
         None => String::new(),
     }
+}
+
+fn bool_arg(args: &[Value], index: usize, fallback: bool) -> bool {
+    args.get(index).and_then(Value::as_bool).unwrap_or(fallback)
 }
