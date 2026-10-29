@@ -40,16 +40,18 @@ impl Engine {
     pub fn new(paths: Paths, events: EventBus) -> Arc<Self> {
         let state = BackendState::new();
         let cheats = Arc::new(Cheats::new());
+
+        // Restore the profile that was active last time (or create it).
+        let store = Store::new(paths.app_data.clone());
+        sync_gameplay_settings(&state, &store.settings());
+        let current = store.ensure_current(&cheats.values_snapshot());
+        cheats.apply_values(&store.profile_cheats(&current));
+
         let backend = BackendLoop::new(
             Arc::clone(&state),
             Arc::clone(&cheats),
             events.clone(),
         );
-
-        // Restore the profile that was active last time (or create it).
-        let store = Store::new(paths.app_data.clone());
-        let current = store.ensure_current(&cheats.values_snapshot());
-        cheats.apply_values(&store.profile_cheats(&current));
 
         log::info!(
             target: "GamingChairLLC.engine",
@@ -90,10 +92,18 @@ impl Engine {
     // -- status ----------------------------------------------------------
 
     pub fn status(&self) -> Value {
+        let game = self.state.game_status();
+
         json!({
             "attached": self.state.attached(),
             "version": config::APP_VERSION,
             "build_type": config::BUILD_TYPE,
+            "game": {
+                "phase": game.phase.as_str(),
+                "place_id": game.place_id,
+                "life": game.life.as_str(),
+            },
+            "hacks_suspended": self.state.hacks_suspended(),
         })
     }
 
@@ -124,7 +134,10 @@ impl Engine {
 
     pub fn save_settings(&self, patch: Value) -> Value {
         match self.store.save_settings(&patch) {
-            Ok(settings) => json!({ "success": true, "settings": settings }),
+            Ok(settings) => {
+                sync_gameplay_settings(&self.state, &settings);
+                json!({ "success": true, "settings": settings })
+            }
             Err(err) => error(err),
         }
     }
@@ -391,7 +404,17 @@ impl Engine {
 
         if let Some(cheat) = self.cheats.find_toggle(name) {
             let result = if enabled {
-                cheat.enable(&roblox, values)
+                // No character on the home screen / while dead (including the
+                // short window before the monitor notices): keep the switch on
+                // and let the resume pass apply it.
+                let no_character = roblox.get_local_humanoid().is_none();
+                if (self.state.hacks_suspended() || no_character)
+                    && cheat.defer_enable(values.clone())
+                {
+                    Ok(())
+                } else {
+                    cheat.enable(&roblox, values)
+                }
             } else {
                 cheat.disable(&roblox)
             };
@@ -445,7 +468,14 @@ impl Engine {
         let _guard = self.lock.lock();
 
         if let Some(cheat) = self.cheats.find_toggle(name) {
-            let result = cheat.update_values(roblox.as_ref(), values);
+            // While suspended there is no humanoid to write to; remember the
+            // value and apply it with the rest of the switches on resume.
+            let result = if self.state.hacks_suspended() {
+                cheat.store_values(&values);
+                Ok(())
+            } else {
+                cheat.update_values(roblox.as_ref(), values)
+            };
             self.persist_cheat_values();
             return result_to_json(result);
         }
@@ -534,6 +564,17 @@ impl Engine {
         }
         self.state.roblox()
     }
+}
+
+/// Mirror the persisted gameplay switches into the lock-free state the backend
+/// loop reads.
+fn sync_gameplay_settings(state: &BackendState, settings: &Value) {
+    let enabled = |key: &str| settings.get(key).and_then(Value::as_bool).unwrap_or(false);
+
+    state.set_gameplay_settings(
+        enabled("disable_hacks_on_leave"),
+        enabled("disable_hacks_on_death"),
+    );
 }
 
 fn clean_values(values: Option<Value>) -> Value {

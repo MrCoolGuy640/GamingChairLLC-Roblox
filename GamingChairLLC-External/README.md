@@ -203,6 +203,28 @@ A press that happens while either condition fails is ignored. Keys are
 edge-triggered — holding one down toggles once. Toggling from a keybind updates
 the switch in the UI immediately.
 
+### Leaving a game and dying
+
+The backend watches the Roblox session on its own: it tails the client's
+`*_Player_*.log` for join/leave lines and samples the local humanoid while a
+place is loaded. Two switches under **Settings → Gameplay** decide what happens
+to hacks at those moments.
+
+| Setting | When it happens | What the app does |
+| --- | --- | --- |
+| **Disable Hacks on Leave** | The log reports `returnToLuaApp:` / `Entered app session.` (back to the home screen) | Releases every memory lock and turns all switches off. With the switch off, the locks are still released, the switches stay on, and they are re-applied once the next place finishes loading. |
+| **Disable Hacks on Death** | Health reaches `0`, the humanoid enters the `Dead` state, or the character leaves the workspace while the place is still loaded | Same memory cleanup. With the switch off the switches stay on and are re-applied on respawn; with it on they are cleared. |
+
+Both settings are off by default, so the normal behaviour is quiet: the
+freezer and Fly/Fling slots are released on death or leaving, and whatever you
+had switched on comes back afterwards. This is what keeps Fly's camera usable
+after a respawn. A hack you toggle (from the GUI or its keybind) during the dead
+window is remembered and applied with the rest when the character returns
+rather than being dropped.
+
+A join only counts once `DataModel.GameLoaded` turns true, so the app never
+tries to write to the loading screen. Detaching resets the monitor state.
+
 ### Script decompiler
 
 The **Explorer** can dump and decompile the bytecode of any `ModuleScript` or
@@ -235,7 +257,7 @@ All writable data lives in one folder:
 
 ```text
 %LOCALAPPDATA%\GamingChairLLC\
-  settings.json          UI preferences (theme, menu keybind)
+  settings.json          UI preferences (theme, menu keybind, leave/death toggles)
   data.json              active profile
   profiles\
     Default.json         cheat values per profile
@@ -289,6 +311,7 @@ src/
     engine.rs        attach/detach, cheats, explorer, settings/profiles
     store.rs         settings.json, data.json and profiles (atomic writes)
     worker.rs        always-on backend loop (ticked cheats)
+    monitor.rs       Roblox log tail + join/leave and death detection
     keybinds.rs      keybind polling, foreground/chat gates
     explorer.rs      instance-tree/properties queries
     scripts.rs       "Dump"/"Decompile" actions + native save dialog

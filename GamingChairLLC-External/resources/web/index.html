@@ -426,6 +426,13 @@
                 </div>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
               </button>
+              <button class="settings-row" data-panel="gameplay">
+                <div class="settings-row-text">
+                  <span class="settings-row-title">Gameplay</span>
+                  <span class="settings-row-desc">Hacks when leaving a game or dying.</span>
+                </div>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
               <button class="settings-row" data-panel="advanced">
                 <div class="settings-row-text">
                   <span class="settings-row-title">Advanced</span>
@@ -457,6 +464,40 @@
                   <option value="light">Light</option>
                   <option value="system">System</option>
                 </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gameplay panel -->
+          <div class="settings-panel" id="panel-gameplay">
+            <button class="panel-back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>
+              <span>Settings</span>
+            </button>
+            <div class="panel-title">
+              <h2>Gameplay</h2>
+              <p>What happens to active hacks when the session changes.</p>
+            </div>
+            <div class="control-list">
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Disable Hacks on Leave</span>
+                  <span class="control-desc">Turn every hack off when you return to the Roblox home screen. Off keeps the switches on and re-applies them after the next game loads.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="disableOnLeaveToggle">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Disable Hacks on Death</span>
+                  <span class="control-desc">Turn every hack off when you die. Off still releases the locked memory, but keeps the switches on and re-applies them on respawn.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="disableOnDeathToggle">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
               </div>
             </div>
           </div>

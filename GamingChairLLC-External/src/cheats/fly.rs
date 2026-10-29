@@ -198,6 +198,18 @@ impl TickedCheat for FlyCheat {
         self.shared.clear();
         log::info!(target: "GamingChairLLC.fly", "Fly off");
     }
+
+    fn on_abort(&self, _roblox: &Arc<Roblox>) {
+        if let Some(session) = self.shared.get() {
+            // The character is gone: release the freeze now instead of waiting
+            // for a stand-up that has nothing to stand up.
+            session.abandon_standup();
+            session.stop();
+        }
+
+        self.shared.clear();
+        log::info!(target: "GamingChairLLC.fly", "Fly off (aborted)");
+    }
 }
 
 fn axis(positive: i32, negative: i32) -> f32 {

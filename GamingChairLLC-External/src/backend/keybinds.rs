@@ -64,7 +64,18 @@ impl Keybinds {
             let name = cheat.name();
             let enable = !cheat.enabled();
             let result = if enable {
-                cheat.enable(roblox, cheat.values())
+                let values = cheat.values();
+                // While dead / on the home screen there is no humanoid. Keep
+                // the switch on so the resume pass applies it; a failed
+                // `enable` here would silently drop the user's keypress.
+                let no_character = roblox.get_local_humanoid().is_none();
+                if (state.hacks_suspended() || no_character)
+                    && cheat.defer_enable(values.clone())
+                {
+                    Ok(())
+                } else {
+                    cheat.enable(roblox, values)
+                }
             } else {
                 cheat.disable(roblox)
             };

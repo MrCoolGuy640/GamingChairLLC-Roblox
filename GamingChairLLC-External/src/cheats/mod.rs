@@ -76,6 +76,16 @@ pub trait ToggleCheat: Send + Sync {
     fn enable(&self, roblox: &Arc<Roblox>, values: Value) -> Result<(), String>;
     fn disable(&self, roblox: &Arc<Roblox>) -> Result<(), String>;
 
+    /// Remember the switch without touching the game.
+    ///
+    /// The backend uses this while the character is unavailable (home screen or
+    /// death): there is nothing to write to yet, and a failed `enable` must not
+    /// clear what the user asked for. Returns true when the cheat could defer;
+    /// the resume pass applies it once the character is back.
+    fn defer_enable(&self, _values: Value) -> bool {
+        false
+    }
+
     /// Live-update. Disabled cheats only remember the new values.
     fn update_values(
         &self,
@@ -136,6 +146,10 @@ impl TickedMeta {
         self.enabled.load(Ordering::Relaxed)
     }
 
+    pub fn running(&self) -> bool {
+        self.running.load(Ordering::Acquire)
+    }
+
     pub fn values(&self) -> Value {
         self.values.lock().clone()
     }
@@ -173,6 +187,17 @@ pub trait TickedCheat: Send + Sync {
     fn on_tick(&self, roblox: &Arc<Roblox>, now: f64);
     fn on_values(&self, _roblox: &Arc<Roblox>, _values: &Value) {}
     fn on_stop(&self, _roblox: &Arc<Roblox>) {}
+
+    /// Immediate teardown when the character is already gone (death or leaving
+    /// to the home screen).
+    ///
+    /// `on_stop` is allowed to wait for a graceful cleanup; on death the
+    /// character no longer exists, so waiting can stall the backend loop and
+    /// keep freezer slots alive against memory the client is about to reuse.
+    /// The default keeps the normal behaviour.
+    fn on_abort(&self, roblox: &Arc<Roblox>) {
+        self.on_stop(roblox);
+    }
 
     /// True exactly once when a one-shot cheat's worker has finished, which
     /// makes the loop switch the cheat back off.
@@ -364,14 +389,39 @@ pub fn ticked_tick(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>, now: f64) -> b
     false
 }
 
+/// How a halted cheat should give up its effect.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HaltMode {
+    /// Normal pause / detach: wait for any graceful cleanup.
+    Graceful,
+    /// The character is gone: release everything now instead of waiting for a
+    /// stand-up that can never finish.
+    Abort,
+}
+
 /// Loop pausing / target lost: undo the effect but keep the desired state.
 pub fn ticked_halt(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>) {
+    ticked_halt_with(cheat, roblox, HaltMode::Graceful);
+}
+
+pub fn ticked_halt_with(cheat: &dyn TickedCheat, roblox: &Arc<Roblox>, mode: HaltMode) {
     let meta = cheat.meta();
     if !meta.running.swap(false, Ordering::AcqRel) {
         return;
     }
 
-    stop(cheat, roblox);
+    match mode {
+        HaltMode::Graceful => stop(cheat, roblox),
+        HaltMode::Abort => {
+            if catch_unwind(AssertUnwindSafe(|| cheat.on_abort(roblox))).is_err() {
+                log::error!(
+                    target: "GamingChairLLC.cheats",
+                    "Cheat '{}' panicked in on_abort",
+                    cheat.name()
+                );
+            }
+        }
+    }
 }
 
 pub fn ticked_reset(cheat: &dyn TickedCheat) {

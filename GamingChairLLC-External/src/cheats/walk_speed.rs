@@ -94,6 +94,12 @@ impl ToggleCheat for WalkSpeedCheat {
         Ok(())
     }
 
+    fn defer_enable(&self, values: Value) -> bool {
+        self.store_values(&values);
+        self.enabled.store(true, Ordering::Release);
+        true
+    }
+
     fn disable(&self, roblox: &Arc<Roblox>) -> Result<(), String> {
         let humanoid = roblox.get_local_humanoid();
         let original = self.original.lock().take();

@@ -24,6 +24,8 @@ const themeSelect = document.getElementById("themeSelect");
 const menuKeybindBtn = document.getElementById("menuKeybindBtn");
 const appDataPath = document.getElementById("appDataPath");
 const openAppDataBtn = document.getElementById("openAppDataBtn");
+const disableOnLeaveToggle = document.getElementById("disableOnLeaveToggle");
+const disableOnDeathToggle = document.getElementById("disableOnDeathToggle");
 
 // ---------------------------------------------
 // Saving (debounced so a burst of changes is one write)
@@ -64,6 +66,13 @@ function applySettings(settings) {
     menuKeybindBtn.textContent = settings.menu_keybind;
     menuKeybindBtn.dataset.key = settings.menu_keybind;
   }
+
+  if (disableOnLeaveToggle) {
+    disableOnLeaveToggle.checked = !!settings.disable_hacks_on_leave;
+  }
+  if (disableOnDeathToggle) {
+    disableOnDeathToggle.checked = !!settings.disable_hacks_on_death;
+  }
 }
 
 function applyAppDataPath(path) {
@@ -79,6 +88,18 @@ if (themeSelect) {
   themeSelect.addEventListener("change", () => {
     document.documentElement.dataset.theme = themeSelect.value;
     queueSettingsSave({ theme: themeSelect.value });
+  });
+}
+
+if (disableOnLeaveToggle) {
+  disableOnLeaveToggle.addEventListener("change", () => {
+    queueSettingsSave({ disable_hacks_on_leave: disableOnLeaveToggle.checked });
+  });
+}
+
+if (disableOnDeathToggle) {
+  disableOnDeathToggle.addEventListener("change", () => {
+    queueSettingsSave({ disable_hacks_on_death: disableOnDeathToggle.checked });
   });
 }
 

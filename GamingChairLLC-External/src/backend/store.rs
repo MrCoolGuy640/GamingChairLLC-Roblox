@@ -274,6 +274,10 @@ fn default_settings() -> Value {
     json!({
         "theme": "dark",
         "menu_keybind": "Insert",
+        // Off by default: the switches stay where the user put them and the
+        // backend quietly re-applies them after a leave/respawn.
+        "disable_hacks_on_leave": false,
+        "disable_hacks_on_death": false,
     })
 }
 
@@ -308,6 +312,11 @@ fn sanitize_settings(value: Value) -> Value {
         keybind
     };
     object.insert("menu_keybind".into(), Value::String(keybind));
+
+    for key in ["disable_hacks_on_leave", "disable_hacks_on_death"] {
+        let enabled = object.get(key).and_then(Value::as_bool).unwrap_or(false);
+        object.insert(key.into(), Value::Bool(enabled));
+    }
 
     Value::Object(object)
 }
@@ -462,6 +471,30 @@ mod tests {
         // Unknown themes fall back to dark.
         let settings = store.save_settings(&json!({ "theme": "neon" })).unwrap();
         assert_eq!(settings["theme"], "dark");
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn gameplay_settings_default_to_off_and_round_trip() {
+        let (store, root) = temp_store("gameplay-settings");
+
+        let settings = store.settings();
+        assert_eq!(settings["disable_hacks_on_leave"], false);
+        assert_eq!(settings["disable_hacks_on_death"], false);
+
+        let settings = store
+            .save_settings(&json!({
+                "disable_hacks_on_leave": true,
+                "disable_hacks_on_death": 1,
+            }))
+            .unwrap();
+        assert_eq!(settings["disable_hacks_on_leave"], true);
+        // Non-boolean input falls back to the default instead of being kept.
+        assert_eq!(settings["disable_hacks_on_death"], false);
+
+        let reloaded = Store::new(root.clone());
+        assert_eq!(reloaded.settings()["disable_hacks_on_leave"], true);
 
         let _ = fs::remove_dir_all(root);
     }

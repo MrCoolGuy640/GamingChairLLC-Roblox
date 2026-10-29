@@ -433,6 +433,16 @@ impl FlySession {
         self.standup_done.store(true, Ordering::Release);
     }
 
+    /// Supersede and detach a stand-up without joining it.
+    ///
+    /// Death / leaving: the character the stand-up would write to is gone, so
+    /// blocking the loop until `settle_timeout` would only delay the resume.
+    /// The detached worker checks `is_current_standup` and stops writing.
+    pub fn abandon_standup(&self) {
+        self.cancel_standup();
+        let _ = self.standup.lock().take();
+    }
+
     pub fn set_standup_handle(&self, handle: JoinHandle<()>, settle: Duration) {
         *self.standup_deadline.lock() = Instant::now() + settle + STANDUP_JOIN_MARGIN;
         *self.standup.lock() = Some(handle);
