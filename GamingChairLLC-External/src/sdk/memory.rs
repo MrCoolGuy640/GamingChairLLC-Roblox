@@ -75,7 +75,7 @@ impl Memory {
     }
 
     pub fn read_bytes(&self, address: u64, size: usize) -> Vec<u8> {
-        self.disabler.disable();
+        //self.disabler.disable(); // NO NEED FOR DISABLER ON READS
 
         if address <= 0x1000 || size == 0 || size > 64 * 1024 * 1024 {
             return Vec::new();
