@@ -29,6 +29,9 @@ pub struct InstanceOffsets {
     pub children_end: u64,
     pub class_descriptor: u64,
     pub class_name: u64,
+    /// `Instance.Parent` pointer. Used to prove a child still belongs to the
+    /// instance we created it under.
+    pub parent: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -127,6 +130,13 @@ pub struct ChatOffsets {
     pub is_focused: u64,
 }
 
+/// `Highlight` appearance fields used by the ESP cheat.
+#[derive(Debug, Clone)]
+pub struct HighlightOffsets {
+    pub fill_transparency: u64,
+    pub outline_transparency: u64,
+}
+
 /// Custom, hardcoded offsets for script bytecode.
 ///
 /// These do **not** come from the offsets API: its bytecode section has been
@@ -170,6 +180,7 @@ pub struct Offsets {
     pub player: PlayerOffsets,
     pub data_model: DataModelOffsets,
     pub chat: ChatOffsets,
+    pub highlight: HighlightOffsets,
     pub camera: CameraOffsets,
     pub workspace: WorkspaceOffsets,
     pub world: WorldOffsets,
@@ -200,6 +211,7 @@ impl Offsets {
         let player = root.get("Player");
         let data_model = root.get("DataModel");
         let chat = root.get("ChatInputBarConfiguration");
+        let highlight = root.get("Highlight");
         let camera = root.get("Camera");
         let workspace = root.get("Workspace");
         let world = root.get("World");
@@ -219,6 +231,7 @@ impl Offsets {
                 children_end: number(instance, "ChildrenEnd").unwrap_or(8),
                 class_descriptor: number(instance, "ClassDescriptor").unwrap_or(24),
                 class_name: number(instance, "ClassName").unwrap_or(8),
+                parent: number(instance, "Parent").unwrap_or(0x60),
             },
             fake_data_model: FakeDataModelOffsets {
                 pointer: fake_pointer,
@@ -268,6 +281,10 @@ impl Offsets {
             },
             chat: ChatOffsets {
                 is_focused: number(chat, "IsFocused").unwrap_or(294),
+            },
+            highlight: HighlightOffsets {
+                fill_transparency: number(highlight, "FillTransparency").unwrap_or(204),
+                outline_transparency: number(highlight, "OutlineTransparency").unwrap_or(212),
             },
             camera: CameraOffsets {
                 camera_subject: number(camera, "CameraSubject").unwrap_or(176),
@@ -398,6 +415,7 @@ fn write_cache(paths: &Paths, offsets: &Offsets, version: &str, now: f64) {
             "ChildrenEnd": offsets.instance.children_end,
             "ClassDescriptor": offsets.instance.class_descriptor,
             "ClassName": offsets.instance.class_name,
+            "Parent": offsets.instance.parent,
         },
         "FakeDataModel": {
             "Pointer": offsets.fake_data_model.pointer,
@@ -443,6 +461,10 @@ fn write_cache(paths: &Paths, offsets: &Offsets, version: &str, now: f64) {
         },
         "ChatInputBarConfiguration": {
             "IsFocused": offsets.chat.is_focused,
+        },
+        "Highlight": {
+            "FillTransparency": offsets.highlight.fill_transparency,
+            "OutlineTransparency": offsets.highlight.outline_transparency,
         },
         "Camera": {
             "CameraSubject": offsets.camera.camera_subject,
@@ -595,6 +617,8 @@ mod tests {
         assert_eq!(offsets.data_model.game_loaded, 1480);
         assert_eq!(offsets.data_model.server_ip, 1456);
         assert_eq!(offsets.chat.is_focused, 294);
+        assert_eq!(offsets.highlight.fill_transparency, 204);
+        assert_eq!(offsets.instance.parent, 0x60);
         assert_eq!(offsets.camera.rotation, 192);
         assert_eq!(offsets.workspace.current_camera, 1184);
         assert_eq!(offsets.world.fallen_parts_destroy_height, 532);

@@ -14,6 +14,11 @@ use windows_sys::Win32::System::Diagnostics::ToolHelp::{
     CreateToolhelp32Snapshot, Module32FirstW, Module32NextW, MODULEENTRY32W, TH32CS_SNAPMODULE,
     TH32CS_SNAPMODULE32,
 };
+use windows_sys::Win32::System::Memory::{
+    VirtualAllocEx, VirtualFreeEx, VirtualProtectEx, VirtualQueryEx, CFG_CALL_TARGET_INFO,
+    MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, MEMORY_BASIC_INFORMATION, PAGE_READWRITE,
+    SetProcessValidCallTargets,
+};
 use windows_sys::Win32::System::Threading::{
     GetCurrentThread, OpenProcess, SetThreadPriority, PROCESS_ALL_ACCESS,
     THREAD_PRIORITY_ABOVE_NORMAL,
@@ -35,6 +40,14 @@ pub struct Memory {
 // one connection.
 unsafe impl Send for Memory {}
 unsafe impl Sync for Memory {}
+
+/// A snapshot of one committed range in the target's address space.
+pub struct RegionInfo {
+    pub base: u64,
+    pub size: u64,
+    pub protect: u32,
+    pub state: u32,
+}
 
 impl Memory {
     pub fn attach(pid: u32, module_name: &str) -> Result<Arc<Self>> {
@@ -72,6 +85,118 @@ impl Memory {
 
     pub fn base_address(&self) -> u64 {
         self.base_address
+    }
+
+    /// Commit a fresh region in the target (`VirtualAllocEx`). Returns 0 when
+    /// the allocation fails.
+    pub fn allocate(&self, size: usize) -> u64 {
+        self.allocate_with_protection(size, PAGE_READWRITE)
+    }
+
+    /// [`Memory::allocate`] with an explicit page protection.
+    pub fn allocate_with_protection(&self, size: usize, protection: u32) -> u64 {
+        if size == 0 {
+            return 0;
+        }
+
+        self.disabler.disable();
+
+        let address = unsafe {
+            VirtualAllocEx(
+                self.handle,
+                std::ptr::null(),
+                size,
+                MEM_COMMIT | MEM_RESERVE,
+                protection,
+            )
+        };
+
+        address as u64
+    }
+
+    /// Release a region returned by [`Memory::allocate`].
+    pub fn free(&self, address: u64) -> bool {
+        if address == 0 {
+            return false;
+        }
+
+        self.disabler.disable();
+
+        unsafe { VirtualFreeEx(self.handle, address as *mut c_void, 0, MEM_RELEASE) != 0 }
+    }
+
+    /// Change the protection of a range and return the previous protection.
+    pub fn protect(&self, address: u64, size: usize, protection: u32) -> Option<u32> {
+        if address == 0 || size == 0 {
+            return None;
+        }
+
+        self.disabler.disable();
+
+        let mut previous = 0u32;
+        let ok = unsafe {
+            VirtualProtectEx(
+                self.handle,
+                address as *const c_void,
+                size,
+                protection,
+                &mut previous,
+            )
+        };
+
+        (ok != 0).then_some(previous)
+    }
+
+    /// The committed region containing `address`.
+    pub fn region(&self, address: u64) -> Option<RegionInfo> {
+        let mut info = MEMORY_BASIC_INFORMATION::default();
+        let written = unsafe {
+            VirtualQueryEx(
+                self.handle,
+                address as *const c_void,
+                &mut info,
+                std::mem::size_of::<MEMORY_BASIC_INFORMATION>(),
+            )
+        };
+        if written == 0 {
+            return None;
+        }
+
+        Some(RegionInfo {
+            base: info.BaseAddress as u64,
+            size: info.RegionSize as u64,
+            protect: info.Protect,
+            state: info.State,
+        })
+    }
+
+    /// Register `address` as a legal Control Flow Guard indirect-call target.
+    ///
+    /// This target's client is not CFG-enforced, so the call normally fails with
+    /// ERROR_INVALID_PARAMETER; it is kept because the call gate is also used as
+    /// a reference for hardened clients, and it is harmless otherwise.
+    pub fn register_call_target(&self, address: u64) -> bool {
+        if address == 0 {
+            return false;
+        }
+
+        let base = address & !0xFFF;
+        let mut info = CFG_CALL_TARGET_INFO {
+            Offset: (address - base) as usize,
+            Flags: 1, // CFG_CALL_TARGET_VALID
+        };
+
+        self.disabler.disable();
+
+        unsafe {
+            SetProcessValidCallTargets(
+                self.handle,
+                base as *const c_void,
+                0x1000,
+                1,
+                &mut info,
+            ) != 0
+        }
     }
 
     pub fn read_bytes(&self, address: u64, size: usize) -> Vec<u8> {

@@ -1,0 +1,2646 @@
+{
+  "generated": "2026-10-29 14:22:54",
+  "build": {
+    "timestamp": 2286735957,
+    "entry_point": 153255940,
+    "size_of_image": 153264128,
+    "checksum": 142711565,
+    "id": "953a16d078e911e4"
+  },
+  "module_base": 140701283647488,
+  "InstanceNew": {
+    "Creator_create": 0,
+    "Creator_isCreatable": 16,
+    "CreatorTable": 147357528,
+    "CreatorTable_Count": 24,
+    "CreatorTable_Capacity": 16,
+    "NameRegistry": 138682400,
+    "NameTable": 80,
+    "TableStart": 0,
+    "TableEnd": 8,
+    "TableEmpty": 32,
+    "EntryValue": 8,
+    "EntryStride": 16,
+    "Name_Size": 16,
+    "Name_Capacity": 24,
+    "Name_InlineCapacity": 15,
+    "ParentDesc": 139606192,
+    "ParentSetter": 8091536,
+    "AllocMalloc": null
+  },
+  "InstanceNew_hex": {
+    "Creator_create": "0x0",
+    "Creator_isCreatable": "0x10",
+    "CreatorTable": "0x8C87F58",
+    "CreatorTable_Count": "0x18",
+    "CreatorTable_Capacity": "0x10",
+    "NameRegistry": "0x8442020",
+    "NameTable": "0x50",
+    "TableStart": "0x0",
+    "TableEnd": "0x8",
+    "TableEmpty": "0x20",
+    "EntryValue": "0x8",
+    "EntryStride": "0x10",
+    "Name_Size": "0x10",
+    "Name_Capacity": "0x18",
+    "Name_InlineCapacity": "0xF",
+    "ParentDesc": "0x85238B0",
+    "ParentSetter": "0x7B7790",
+    "AllocMalloc": null
+  },
+  "detail": {
+    "creator_table": {
+      "header_rva": 147357528,
+      "start_va": 1782677831904,
+      "end_va": 1782677848288,
+      "empty_va": 0,
+      "slots": 1024,
+      "count_field": 24,
+      "capacity_field": 16,
+      "layout": "header is {begin +0x0, end +0x8, capacity_end +0x10, count +0x18}; the +0x20 empty field is 0 (unused)",
+      "valid_entries": 616,
+      "classes": {
+        "ParticleEmitter": {
+          "creator_rva": 146894568,
+          "vtable_rva": 115759928
+        },
+        "Atmosphere": {
+          "creator_rva": 146974104,
+          "vtable_rva": 115877344
+        },
+        "OperationGraph": {
+          "creator_rva": 146897640,
+          "vtable_rva": 115761552
+        },
+        "InternalSyncItem": {
+          "creator_rva": 147310808,
+          "vtable_rva": 116516120
+        },
+        "EditableImage": {
+          "creator_rva": 146944936,
+          "vtable_rva": 115825832
+        },
+        "TextChatMessage": {
+          "creator_rva": 147145176,
+          "vtable_rva": 116210344
+        },
+        "RenderSettings": {
+          "creator_rva": 147731800,
+          "vtable_rva": 117781552
+        },
+        "CloudClientService": {
+          "creator_rva": 147797608,
+          "vtable_rva": 117788512
+        },
+        "NetworkSettings": {
+          "creator_rva": 146900008,
+          "vtable_rva": 115766448
+        },
+        "ManualWeld": {
+          "creator_rva": 147108440,
+          "vtable_rva": 116140952
+        },
+        "EqualizerSoundEffect": {
+          "creator_rva": 147190632,
+          "vtable_rva": 116271936
+        },
+        "AudioSearchParams": {
+          "creator_rva": 146972936,
+          "vtable_rva": 115874992
+        },
+        "Explosion": {
+          "creator_rva": 147117960,
+          "vtable_rva": 116151976
+        },
+        "BugReporterService": {
+          "creator_rva": 147203928,
+          "vtable_rva": 116292056
+        },
+        "BodyVelocity": {
+          "creator_rva": 147126232,
+          "vtable_rva": 116161360
+        },
+        "MicroProfilerService": {
+          "creator_rva": 147177480,
+          "vtable_rva": 116249768
+        },
+        "AudioChannelSplitter": {
+          "creator_rva": 147229608,
+          "vtable_rva": 116358968
+        },
+        "UIScale": {
+          "creator_rva": 146721336,
+          "vtable_rva": 115372664
+        },
+        "TerrainWriteOperation": {
+          "creator_rva": 146818968,
+          "vtable_rva": 115607472
+        },
+        "RotationCurve": {
+          "creator_rva": 146680504,
+          "vtable_rva": 115290632
+        },
+        "TextBox": {
+          "creator_rva": 146734680,
+          "vtable_rva": 115421216
+        },
+        "UnionOperation": {
+          "creator_rva": 146773320,
+          "vtable_rva": 115503936
+        },
+        "Terrain": {
+          "creator_rva": 146820744,
+          "vtable_rva": 115615792
+        },
+        "VisualizationModeService": {
+          "creator_rva": 146828072,
+          "vtable_rva": 115646400
+        },
+        "SoundService": {
+          "creator_rva": 146861992,
+          "vtable_rva": 115709176
+        },
+        "EncodingService": {
+          "creator_rva": 146943752,
+          "vtable_rva": 115823264
+        },
+        "IntConstrainedValue": {
+          "creator_rva": 147070616,
+          "vtable_rva": 115898856
+        },
+        "QWidgetPluginGui": {
+          "creator_rva": 147164184,
+          "vtable_rva": 116233912
+        },
+        "QueueService": {
+          "creator_rva": 146885528,
+          "vtable_rva": 115738744
+        },
+        "VectorForce": {
+          "creator_rva": 147085352,
+          "vtable_rva": 116101936
+        },
+        "MLModelDeliveryService": {
+          "creator_rva": 146710248,
+          "vtable_rva": 115341984
+        },
+        "VideoDisplay": {
+          "creator_rva": 147077752,
+          "vtable_rva": 115913024
+        },
+        "MakeupDescription": {
+          "creator_rva": 147178072,
+          "vtable_rva": 116251536
+        },
+        "MLService": {
+          "creator_rva": 147297512,
+          "vtable_rva": 116480832
+        },
+        "HttpService": {
+          "creator_rva": 146920456,
+          "vtable_rva": 115791696
+        },
+        "DeviceIdService": {
+          "creator_rva": 146948008,
+          "vtable_rva": 115835472
+        },
+        "Decal": {
+          "creator_rva": 146949192,
+          "vtable_rva": 115838696
+        },
+        "GuiMain": {
+          "creator_rva": 146746440,
+          "vtable_rva": 115481504
+        },
+        "SkateboardController": {
+          "creator_rva": 146868696,
+          "vtable_rva": 115718192
+        },
+        "ControlState": {
+          "creator_rva": 146956680,
+          "vtable_rva": 115846344
+        },
+        "ManualGlue": {
+          "creator_rva": 147109608,
+          "vtable_rva": 116140992
+        },
+        "AuroraScript": {
+          "creator_rva": 147214744,
+          "vtable_rva": 116323848
+        },
+        "UIBlur": {
+          "creator_rva": 146729832,
+          "vtable_rva": 115396952
+        },
+        "TextChatMessageProperties": {
+          "creator_rva": 147144584,
+          "vtable_rva": 116206776
+        },
+        "PluginAction": {
+          "creator_rva": 147172088,
+          "vtable_rva": 116242112
+        },
+        "ServerStorage": {
+          "creator_rva": 146802888,
+          "vtable_rva": 115590992
+        },
+        "CompressorSoundEffect": {
+          "creator_rva": 147197128,
+          "vtable_rva": 116278192
+        },
+        "DeferredAssetManagerService": {
+          "creator_rva": 147890040,
+          "vtable_rva": 117847328
+        },
+        "KeyframeMarker": {
+          "creator_rva": 146685832,
+          "vtable_rva": 115302696
+        },
+        "UIStroke": {
+          "creator_rva": 146719560,
+          "vtable_rva": 115368200
+        },
+        "CanvasGroup": {
+          "creator_rva": 146751960,
+          "vtable_rva": 115493648
+        },
+        "RemoteEvent": {
+          "creator_rva": 146883752,
+          "vtable_rva": 115736448
+        },
+        "DepthOfFieldEffect": {
+          "creator_rva": 146770360,
+          "vtable_rva": 115501936
+        },
+        "ConnectivityService": {
+          "creator_rva": 147964456,
+          "vtable_rva": 117857072
+        },
+        "VisualizationMode": {
+          "creator_rva": 146828664,
+          "vtable_rva": 115647096
+        },
+        "SafetyService": {
+          "creator_rva": 147160632,
+          "vtable_rva": 116231720
+        },
+        "ExperienceService": {
+          "creator_rva": 147713640,
+          "vtable_rva": 117645280
+        },
+        "AnimationRigData": {
+          "creator_rva": 146705016,
+          "vtable_rva": 115331984
+        },
+        "UGCAvatarService": {
+          "creator_rva": 146837016,
+          "vtable_rva": 115667776
+        },
+        "NumberValue": {
+          "creator_rva": 147069432,
+          "vtable_rva": 115897824
+        },
+        "WrapTarget": {
+          "creator_rva": 147138600,
+          "vtable_rva": 116193872
+        },
+        "PlayerListConfiguration": {
+          "creator_rva": 146794632,
+          "vtable_rva": 115582928
+        },
+        "LodDataService": {
+          "creator_rva": 146909448,
+          "vtable_rva": 115779072
+        },
+        "AvatarBodyRules": {
+          "creator_rva": 147211784,
+          "vtable_rva": 116315480
+        },
+        "OmniRecommendationsService": {
+          "creator_rva": 148123048,
+          "vtable_rva": 118015392
+        },
+        "PinShortcutService": {
+          "creator_rva": 147307704,
+          "vtable_rva": 116502032
+        },
+        "ScreenGui": {
+          "creator_rva": 146738376,
+          "vtable_rva": 115441552
+        },
+        "TremoloSoundEffect": {
+          "creator_rva": 147142216,
+          "vtable_rva": 116198952
+        },
+        "OpenCloudService": {
+          "creator_rva": 146898232,
+          "vtable_rva": 115761624
+        },
+        "HeapProfilerService": {
+          "creator_rva": 147183528,
+          "vtable_rva": 116266984
+        },
+        "FlangeSoundEffect": {
+          "creator_rva": 147185896,
+          "vtable_rva": 116268208
+        },
+        "IncrementalPatchBuilder": {
+          "creator_rva": 147311480,
+          "vtable_rva": 116516992
+        },
+        "NetworkClient": {
+          "creator_rva": 147726536,
+          "vtable_rva": 117775552
+        },
+        "HapticEffect": {
+          "creator_rva": 146769768,
+          "vtable_rva": 115501432
+        },
+        "LinearVelocity": {
+          "creator_rva": 147110200,
+          "vtable_rva": 116143552
+        },
+        "ModerationService": {
+          "creator_rva": 146900600,
+          "vtable_rva": 115766952
+        },
+        "ScreenshotCapture": {
+          "creator_rva": 146876024,
+          "vtable_rva": 115726752
+        },
+        "ChatInputBarConfiguration": {
+          "creator_rva": 147200248,
+          "vtable_rva": 116288392
+        },
+        "AdPlacement": {
+          "creator_rva": 147277320,
+          "vtable_rva": 116386560
+        },
+        "Dialog": {
+          "creator_rva": 146946792,
+          "vtable_rva": 115834600
+        },
+        "RobloxServerStorage": {
+          "creator_rva": 146803480,
+          "vtable_rva": 115591032
+        },
+        "Handles": {
+          "creator_rva": 146928216,
+          "vtable_rva": 115800944
+        },
+        "AudioPitchShifter": {
+          "creator_rva": 147220344,
+          "vtable_rva": 116337992
+        },
+        "GenericChallengeService": {
+          "creator_rva": 146932424,
+          "vtable_rva": 115804448
+        },
+        "Keyframe": {
+          "creator_rva": 146685240,
+          "vtable_rva": 115302312
+        },
+        "AudioDistortion": {
+          "creator_rva": 147226488,
+          "vtable_rva": 116353512
+        },
+        "AudioChannelMixer": {
+          "creator_rva": 147230200,
+          "vtable_rva": 116359536
+        },
+        "ReflectionService": {
+          "creator_rva": 146884344,
+          "vtable_rva": 115736816
+        },
+        "IKControl": {
+          "creator_rva": 146686424,
+          "vtable_rva": 115305080
+        },
+        "PyramidHandleAdornment": {
+          "creator_rva": 146886120,
+          "vtable_rva": 115740760
+        },
+        "ExperienceInviteOptions": {
+          "creator_rva": 146942568,
+          "vtable_rva": 115819616
+        },
+        "ExperienceStateRecordingService": {
+          "creator_rva": 147135224,
+          "vtable_rva": 116189040
+        },
+        "IntValue": {
+          "creator_rva": 147070024,
+          "vtable_rva": 115898560
+        },
+        "VideoScreenCaptureService": {
+          "creator_rva": 147075384,
+          "vtable_rva": 115902528
+        },
+        "StyleSheet": {
+          "creator_rva": 147316024,
+          "vtable_rva": 116531472
+        },
+        "AudioDeviceInput": {
+          "creator_rva": 147227752,
+          "vtable_rva": 116356208
+        },
+        "DeviceDisplayService": {
+          "creator_rva": 146948600,
+          "vtable_rva": 115835544
+        },
+        "Texture": {
+          "creator_rva": 146842456,
+          "vtable_rva": 115672936
+        },
+        "SelectionPointLasso": {
+          "creator_rva": 146872920,
+          "vtable_rva": 115722472
+        },
+        "ConeHandleAdornment": {
+          "creator_rva": 146959144,
+          "vtable_rva": 115848624
+        },
+        "SceneAnalysisService": {
+          "creator_rva": 146876616,
+          "vtable_rva": 115726816
+        },
+        "MaterialVariant": {
+          "creator_rva": 146905896,
+          "vtable_rva": 115774304
+        },
+        "AuroraScriptObject": {
+          "creator_rva": 147215336,
+          "vtable_rva": 116325408
+        },
+        "RobloxReplicatedStorage": {
+          "creator_rva": 146804072,
+          "vtable_rva": 115591072
+        },
+        "AudioReverb": {
+          "creator_rva": 147218536,
+          "vtable_rva": 116332080
+        },
+        "PerformanceControlService": {
+          "creator_rva": 148127208,
+          "vtable_rva": 118026832
+        },
+        "Animation": {
+          "creator_rva": 146705608,
+          "vtable_rva": 115333408
+        },
+        "TeamCreateData": {
+          "creator_rva": 146852520,
+          "vtable_rva": 115692168
+        },
+        "RolloutValidationService": {
+          "creator_rva": 146880200,
+          "vtable_rva": 115730008
+        },
+        "PluginCapabilities": {
+          "creator_rva": 147171496,
+          "vtable_rva": 116241680
+        },
+        "RobloxSerializableInstance": {
+          "creator_rva": 146881384,
+          "vtable_rva": 115732424
+        },
+        "LodDataEntity": {
+          "creator_rva": 146910040,
+          "vtable_rva": 115782520
+        },
+        "AvatarSettings": {
+          "creator_rva": 147208136,
+          "vtable_rva": 116303616
+        },
+        "FunctionalTest": {
+          "creator_rva": 146934200,
+          "vtable_rva": 115807352
+        },
+        "UIPageLayout": {
+          "creator_rva": 146721928,
+          "vtable_rva": 115375632
+        },
+        "Humanoid": {
+          "creator_rva": 147181672,
+          "vtable_rva": 116261744
+        },
+        "InternalMessagingServiceVerifier": {
+          "creator_rva": 146913208,
+          "vtable_rva": 115787496
+        },
+        "BoxHandleAdornment": {
+          "creator_rva": 146965128,
+          "vtable_rva": 115862544
+        },
+        "AudioAnalyzer": {
+          "creator_rva": 147230792,
+          "vtable_rva": 116360792
+        },
+        "Noise": {
+          "creator_rva": 147283448,
+          "vtable_rva": 116419952
+        },
+        "UniversalConstraint": {
+          "creator_rva": 147085944,
+          "vtable_rva": 116102632
+        },
+        "UIFlexItem": {
+          "creator_rva": 146726120,
+          "vtable_rva": 115388488
+        },
+        "ShirtGraphic": {
+          "creator_rva": 147154600,
+          "vtable_rva": 116223592
+        },
+        "AnimationNodeDefinition": {
+          "creator_rva": 146706776,
+          "vtable_rva": 115335328
+        },
+        "AppLifecycleObserverService": {
+          "creator_rva": 147264632,
+          "vtable_rva": 116363024
+        },
+        "PlayerHydrationService": {
+          "creator_rva": 146795224,
+          "vtable_rva": 115583440
+        },
+        "AudioDeviceOutput": {
+          "creator_rva": 147227080,
+          "vtable_rva": 116354096
+        },
+        "ArcHandles": {
+          "creator_rva": 146974696,
+          "vtable_rva": 115878840
+        },
+        "WrapContentProvider": {
+          "creator_rva": 147141000,
+          "vtable_rva": 116198200
+        },
+        "FacialAgeEstimationService": {
+          "creator_rva": 147188264,
+          "vtable_rva": 116268952
+        },
+        "SelectionPartLasso": {
+          "creator_rva": 146873512,
+          "vtable_rva": 115723144
+        },
+        "BubbleChatMessageProperties": {
+          "creator_rva": 147204520,
+          "vtable_rva": 116292528
+        },
+        "GetTextBoundsParams": {
+          "creator_rva": 147322728,
+          "vtable_rva": 116534496
+        },
+        "TextChatConfigurations": {
+          "creator_rva": 147146088,
+          "vtable_rva": 116211072
+        },
+        "ReplicatedStorage": {
+          "creator_rva": 146804664,
+          "vtable_rva": 115591112
+        },
+        "BubbleChatConfiguration": {
+          "creator_rva": 147205112,
+          "vtable_rva": 116296872
+        },
+        "TeleportOptions": {
+          "creator_rva": 146850152,
+          "vtable_rva": 115688968
+        },
+        "BodyThrust": {
+          "creator_rva": 147126824,
+          "vtable_rva": 116161792
+        },
+        "AudioTremolo": {
+          "creator_rva": 147216760,
+          "vtable_rva": 116328328
+        },
+        "RolloutValidation": {
+          "creator_rva": 146880792,
+          "vtable_rva": 115732056
+        },
+        "ReplicatedFirst": {
+          "creator_rva": 146881976,
+          "vtable_rva": 115732464
+        },
+        "WorldModel": {
+          "creator_rva": 147081560,
+          "vtable_rva": 116096048
+        },
+        "Hole": {
+          "creator_rva": 147112632,
+          "vtable_rva": 116145464
+        },
+        "ScriptProfilerService": {
+          "creator_rva": 147158184,
+          "vtable_rva": 116227264
+        },
+        "TerrainRegion": {
+          "creator_rva": 146819560,
+          "vtable_rva": 115609280
+        },
+        "SlimContentProvider": {
+          "creator_rva": 147280504,
+          "vtable_rva": 116418816
+        },
+        "Part": {
+          "creator_rva": 147102216,
+          "vtable_rva": 116124624
+        },
+        "BindableFunction": {
+          "creator_rva": 146965720,
+          "vtable_rva": 115862640
+        },
+        "PublishService": {
+          "creator_rva": 146886712,
+          "vtable_rva": 115741560
+        },
+        "SwimController": {
+          "creator_rva": 147088888,
+          "vtable_rva": 116108096
+        },
+        "NegateOperation": {
+          "creator_rva": 146775096,
+          "vtable_rva": 115505032
+        },
+        "VisualizationModeCategory": {
+          "creator_rva": 146829256,
+          "vtable_rva": 115647792
+        },
+        "Dragger": {
+          "creator_rva": 147065464,
+          "vtable_rva": 115895440
+        },
+        "PartyEmulatorService": {
+          "creator_rva": 146893976,
+          "vtable_rva": 115752640
+        },
+        "WebViewService": {
+          "creator_rva": 147141592,
+          "vtable_rva": 116198240
+        },
+        "UnvalidatedAssetService": {
+          "creator_rva": 146714616,
+          "vtable_rva": 115355440
+        },
+        "PartOperationAsset": {
+          "creator_rva": 147103400,
+          "vtable_rva": 116129928
+        },
+        "SlimService": {
+          "creator_rva": 146865064,
+          "vtable_rva": 115713560
+        },
+        "TraceRouteService": {
+          "creator_rva": 147730616,
+          "vtable_rva": 117776096
+        },
+        "EulerRotationCurve": {
+          "creator_rva": 146690200,
+          "vtable_rva": 115310648
+        },
+        "CapturesViewConfiguration": {
+          "creator_rva": 146962104,
+          "vtable_rva": 115853720
+        },
+        "EchoSoundEffect": {
+          "creator_rva": 147191224,
+          "vtable_rva": 116272072
+        },
+        "CaptureService": {
+          "creator_rva": 146751368,
+          "vtable_rva": 115491792
+        },
+        "MemoryStoreService": {
+          "creator_rva": 146902952,
+          "vtable_rva": 115769000
+        },
+        "ChatWindowMessageProperties": {
+          "creator_rva": 147198984,
+          "vtable_rva": 116281408
+        },
+        "DebuggerBreakpoint": {
+          "creator_rva": 147194184,
+          "vtable_rva": 116275216
+        },
+        "TextChatCommand": {
+          "creator_rva": 147146680,
+          "vtable_rva": 116212384
+        },
+        "StyleLink": {
+          "creator_rva": 147317208,
+          "vtable_rva": 116532976
+        },
+        "ViewportFrame": {
+          "creator_rva": 146717704,
+          "vtable_rva": 115360928
+        },
+        "VoiceChatService": {
+          "creator_rva": 146827480,
+          "vtable_rva": 115646184
+        },
+        "SurfaceSelection": {
+          "creator_rva": 146853704,
+          "vtable_rva": 115693768
+        },
+        "BinaryStringValue": {
+          "creator_rva": 147074168,
+          "vtable_rva": 115902048
+        },
+        "BillboardGui": {
+          "creator_rva": 146752552,
+          "vtable_rva": 115495792
+        },
+        "CylinderMesh": {
+          "creator_rva": 146779240,
+          "vtable_rva": 115511176
+        },
+        "FloatCurve": {
+          "creator_rva": 146687768,
+          "vtable_rva": 115308264
+        },
+        "TouchTransmitter": {
+          "creator_rva": 146839480,
+          "vtable_rva": 115669608
+        },
+        "SpawnLocation": {
+          "creator_rva": 147090072,
+          "vtable_rva": 116109880
+        },
+        "InternalMessagingService": {
+          "creator_rva": 146913800,
+          "vtable_rva": 115787536
+        },
+        "ClickDetector": {
+          "creator_rva": 146788472,
+          "vtable_rva": 115538960
+        },
+        "TestService": {
+          "creator_rva": 146845400,
+          "vtable_rva": 115677816
+        },
+        "HumanoidRigDescription": {
+          "creator_rva": 146687096,
+          "vtable_rva": 115307320
+        },
+        "InputObject": {
+          "creator_rva": 146784760,
+          "vtable_rva": 115525392
+        },
+        "UIGradient": {
+          "creator_rva": 146725528,
+          "vtable_rva": 115387000
+        },
+        "Visit": {
+          "creator_rva": 146829848,
+          "vtable_rva": 115647832
+        },
+        "Pose": {
+          "creator_rva": 146681688,
+          "vtable_rva": 115295600
+        },
+        "ViewportCamera": {
+          "creator_rva": 146831032,
+          "vtable_rva": 115648040
+        },
+        "ScriptContext": {
+          "creator_rva": 147160040,
+          "vtable_rva": 116230712
+        },
+        "TaskScheduler": {
+          "creator_rva": 146853112,
+          "vtable_rva": 115693352
+        },
+        "AnimationConstraint": {
+          "creator_rva": 147270376,
+          "vtable_rva": 116364688
+        },
+        "VideoDeviceInput": {
+          "creator_rva": 147078344,
+          "vtable_rva": 115914448
+        },
+        "SharedTableRegistry": {
+          "creator_rva": 147155192,
+          "vtable_rva": 116223720
+        },
+        "HumanoidDescription": {
+          "creator_rva": 147182344,
+          "vtable_rva": 116264656
+        },
+        "AudioLimiter": {
+          "creator_rva": 147221640,
+          "vtable_rva": 116342160
+        },
+        "PopLatencyService": {
+          "creator_rva": 147298136,
+          "vtable_rva": 116482792
+        },
+        "Path3D": {
+          "creator_rva": 146740232,
+          "vtable_rva": 115443920
+        },
+        "LinkingService": {
+          "creator_rva": 148104632,
+          "vtable_rva": 117881120
+        },
+        "Path2D": {
+          "creator_rva": 146740824,
+          "vtable_rva": 115448608
+        },
+        "SlimReplicationService": {
+          "creator_rva": 146865656,
+          "vtable_rva": 115713688
+        },
+        "SlimAnimationReplicationService": {
+          "creator_rva": 146866840,
+          "vtable_rva": 115714080
+        },
+        "CoreGuiConfiguration": {
+          "creator_rva": 146954088,
+          "vtable_rva": 115844552
+        },
+        "SelectionBox": {
+          "creator_rva": 146874840,
+          "vtable_rva": 115724960
+        },
+        "PolicyService": {
+          "creator_rva": 147293688,
+          "vtable_rva": 116473712
+        },
+        "StyleDerive": {
+          "creator_rva": 147317880,
+          "vtable_rva": 116533320
+        },
+        "CharacterMesh": {
+          "creator_rva": 147201000,
+          "vtable_rva": 116289512
+        },
+        "HeatmapService": {
+          "creator_rva": 146925256,
+          "vtable_rva": 115798696
+        },
+        "DesignFoundationsService": {
+          "creator_rva": 147965320,
+          "vtable_rva": 117859208
+        },
+        "AlignPosition": {
+          "creator_rva": 147133400,
+          "vtable_rva": 116180608
+        },
+        "AudioListener": {
+          "creator_rva": 147220936,
+          "vtable_rva": 116340880
+        },
+        "DataStoreService": {
+          "creator_rva": 146809464,
+          "vtable_rva": 115593888
+        },
+        "StartupMessageService": {
+          "creator_rva": 148127800,
+          "vtable_rva": 118027568
+        },
+        "UITextSizeConstraint": {
+          "creator_rva": 146718376,
+          "vtable_rva": 115361736
+        },
+        "SurfaceLight": {
+          "creator_rva": 146854296,
+          "vtable_rva": 115694496
+        },
+        "CSGDictionaryService": {
+          "creator_rva": 146779832,
+          "vtable_rva": 115511848
+        },
+        "Tween": {
+          "creator_rva": 146838232,
+          "vtable_rva": 115668960
+        },
+        "UISizeConstraint": {
+          "creator_rva": 146720152,
+          "vtable_rva": 115369168
+        },
+        "AnimationPlayer": {
+          "creator_rva": 146767416,
+          "vtable_rva": 115498248
+        },
+        "RomarkService": {
+          "creator_rva": 147281096,
+          "vtable_rva": 116418888
+        },
+        "VehicleSeat": {
+          "creator_rva": 147084680,
+          "vtable_rva": 116100608
+        },
+        "IntentService": {
+          "creator_rva": 146914392,
+          "vtable_rva": 115787576
+        },
+        "FileMesh": {
+          "creator_rva": 146777464,
+          "vtable_rva": 115506168
+        },
+        "SpotLight": {
+          "creator_rva": 146859608,
+          "vtable_rva": 115702056
+        },
+        "IntersectOperation": {
+          "creator_rva": 146775688,
+          "vtable_rva": 115505072
+        },
+        "VirtualUser": {
+          "creator_rva": 146830440,
+          "vtable_rva": 115648000
+        },
+        "VersionControlService": {
+          "creator_rva": 146831624,
+          "vtable_rva": 115648680
+        },
+        "TelemetryService": {
+          "creator_rva": 147968328,
+          "vtable_rva": 117867448
+        },
+        "EditableService": {
+          "creator_rva": 146944344,
+          "vtable_rva": 115823984
+        },
+        "DoubleConstrainedValue": {
+          "creator_rva": 147071208,
+          "vtable_rva": 115899608
+        },
+        "RodConstraint": {
+          "creator_rva": 147096216,
+          "vtable_rva": 116117024
+        },
+        "ProceduralModel": {
+          "creator_rva": 146889160,
+          "vtable_rva": 115750936
+        },
+        "AvatarChatService": {
+          "creator_rva": 147211192,
+          "vtable_rva": 116311648
+        },
+        "PointLight": {
+          "creator_rva": 146891016,
+          "vtable_rva": 115751672
+        },
+        "Script": {
+          "creator_rva": 147157592,
+          "vtable_rva": 116227152
+        },
+        "PathfindingModifier": {
+          "creator_rva": 146711992,
+          "vtable_rva": 115350424
+        },
+        "VisibilityCheckDispatcher": {
+          "creator_rva": 147273032,
+          "vtable_rva": 116382384
+        },
+        "Configuration": {
+          "creator_rva": 146957352,
+          "vtable_rva": 115846384
+        },
+        "PhysicsActivitySensor": {
+          "creator_rva": 147101624,
+          "vtable_rva": 116124224
+        },
+        "SlimAnimationDataEntity": {
+          "creator_rva": 146867432,
+          "vtable_rva": 115715800
+        },
+        "CylinderHandleAdornment": {
+          "creator_rva": 146951640,
+          "vtable_rva": 115842216
+        },
+        "FaceControls": {
+          "creator_rva": 147188856,
+          "vtable_rva": 116269080
+        },
+        "AvatarAccessoryRules": {
+          "creator_rva": 147212968,
+          "vtable_rva": 116319672
+        },
+        "MomentsService": {
+          "creator_rva": 146742008,
+          "vtable_rva": 115454224
+        },
+        "LocalizationTable": {
+          "creator_rva": 147294872,
+          "vtable_rva": 116475400
+        },
+        "InputAction": {
+          "creator_rva": 146786616,
+          "vtable_rva": 115535848
+        },
+        "SessionCheckService": {
+          "creator_rva": 146869288,
+          "vtable_rva": 115718320
+        },
+        "PlayerScripts": {
+          "creator_rva": 146792536,
+          "vtable_rva": 115564120
+        },
+        "CornerWedgePart": {
+          "creator_rva": 147121144,
+          "vtable_rva": 116153984
+        },
+        "HeatmapQueryService": {
+          "creator_rva": 146925848,
+          "vtable_rva": 115798736
+        },
+        "CallingService": {
+          "creator_rva": 147963864,
+          "vtable_rva": 117854816
+        },
+        "BodyPosition": {
+          "creator_rva": 147127416,
+          "vtable_rva": 116162664
+        },
+        "InputContext": {
+          "creator_rva": 146785352,
+          "vtable_rva": 115526264
+        },
+        "Logger": {
+          "creator_rva": 146908264,
+          "vtable_rva": 115777048
+        },
+        "AudioGate": {
+          "creator_rva": 147222232,
+          "vtable_rva": 116343376
+        },
+        "BlockMesh": {
+          "creator_rva": 146780424,
+          "vtable_rva": 115512520
+        },
+        "Weld": {
+          "creator_rva": 147082152,
+          "vtable_rva": 116096680
+        },
+        "IntegrityService": {
+          "creator_rva": 146914984,
+          "vtable_rva": 115787616
+        },
+        "FlagStand": {
+          "creator_rva": 146939608,
+          "vtable_rva": 115815448
+        },
+        "SphereHandleAdornment": {
+          "creator_rva": 146860200,
+          "vtable_rva": 115703240
+        },
+        "BindableEvent": {
+          "creator_rva": 146966312,
+          "vtable_rva": 115862800
+        },
+        "GeometryService": {
+          "creator_rva": 146776280,
+          "vtable_rva": 115505320
+        },
+        "ProximityPromptService": {
+          "creator_rva": 146887304,
+          "vtable_rva": 115743248
+        },
+        "ExperienceAuthService": {
+          "creator_rva": 146943160,
+          "vtable_rva": 115821512
+        },
+        "UIDragDetectorService": {
+          "creator_rva": 146726712,
+          "vtable_rva": 115388528
+        },
+        "Color3Value": {
+          "creator_rva": 147071800,
+          "vtable_rva": 115900008
+        },
+        "RigidConstraint": {
+          "creator_rva": 147097480,
+          "vtable_rva": 116119024
+        },
+        "RtMessagingService": {
+          "creator_rva": 147161816,
+          "vtable_rva": 116233408
+        },
+        "DragDetector": {
+          "creator_rva": 146945528,
+          "vtable_rva": 115831336
+        },
+        "VideoFrame": {
+          "creator_rva": 147077160,
+          "vtable_rva": 115910336
+        },
+        "PlayerDataService": {
+          "creator_rva": 146795816,
+          "vtable_rva": 115585312
+        },
+        "EventIngestService": {
+          "creator_rva": 147286392,
+          "vtable_rva": 116421176
+        },
+        "AvatarAnimationRules": {
+          "creator_rva": 147212376,
+          "vtable_rva": 116317152
+        },
+        "FacialAnimationStreamingSubsessionStats": {
+          "creator_rva": 147186488,
+          "vtable_rva": 116268280
+        },
+        "UnreliableRemoteEvent": {
+          "creator_rva": 146835768,
+          "vtable_rva": 115665984
+        },
+        "ServerScriptService": {
+          "creator_rva": 146869880,
+          "vtable_rva": 115718688
+        },
+        "InputActionLabel": {
+          "creator_rva": 146743176,
+          "vtable_rva": 115458720
+        },
+        "Glue": {
+          "creator_rva": 147114408,
+          "vtable_rva": 116147056
+        },
+        "UIAspectRatioConstraint": {
+          "creator_rva": 146731016,
+          "vtable_rva": 115398648
+        },
+        "Clouds": {
+          "creator_rva": 146960328,
+          "vtable_rva": 115850040
+        },
+        "AudioTextToSpeech": {
+          "creator_rva": 147217352,
+          "vtable_rva": 116330080
+        },
+        "AdService": {
+          "creator_rva": 147276136,
+          "vtable_rva": 116385248
+        },
+        "MouseService": {
+          "creator_rva": 146782824,
+          "vtable_rva": 115520192
+        },
+        "Wire": {
+          "creator_rva": 146824472,
+          "vtable_rva": 115636752
+        },
+        "WebSocketService": {
+          "creator_rva": 146825720,
+          "vtable_rva": 115637712
+        },
+        "HarmonyService": {
+          "creator_rva": 146927032,
+          "vtable_rva": 115798816
+        },
+        "AvatarRules": {
+          "creator_rva": 147208728,
+          "vtable_rva": 116304136
+        },
+        "AlignOrientation": {
+          "creator_rva": 147133992,
+          "vtable_rva": 116182808
+        },
+        "AudioFader": {
+          "creator_rva": 147224008,
+          "vtable_rva": 116346520
+        },
+        "AudioFlanger": {
+          "creator_rva": 147222824,
+          "vtable_rva": 116344216
+        },
+        "FriendsCallingService": {
+          "creator_rva": 146934792,
+          "vtable_rva": 115807392
+        },
+        "AdGui": {
+          "creator_rva": 147277992,
+          "vtable_rva": 116390976
+        },
+        "ValueCurve": {
+          "creator_rva": 146677976,
+          "vtable_rva": 115285688
+        },
+        "TimerService": {
+          "creator_rva": 146841272,
+          "vtable_rva": 115671640
+        },
+        "ExternalIdentityService": {
+          "creator_rva": 147965912,
+          "vtable_rva": 117860800
+        },
+        "StandalonePluginScripts": {
+          "creator_rva": 147150392,
+          "vtable_rva": 116215216
+        },
+        "InputReplayService": {
+          "creator_rva": 146917416,
+          "vtable_rva": 115789080
+        },
+        "AirController": {
+          "creator_rva": 147134584,
+          "vtable_rva": 116183832
+        },
+        "MarkerCurve": {
+          "creator_rva": 146683464,
+          "vtable_rva": 115301136
+        },
+        "StarterPlayerScripts": {
+          "creator_rva": 146789944,
+          "vtable_rva": 115550152
+        },
+        "UIDragDetector": {
+          "creator_rva": 146727304,
+          "vtable_rva": 115394424
+        },
+        "VehicleController": {
+          "creator_rva": 146832216,
+          "vtable_rva": 115649776
+        },
+        "CFrameValue": {
+          "creator_rva": 147072392,
+          "vtable_rva": 115900600
+        },
+        "MarketplaceService": {
+          "creator_rva": 147290920,
+          "vtable_rva": 116449448
+        },
+        "AudioEmitter": {
+          "creator_rva": 147225192,
+          "vtable_rva": 116351640
+        },
+        "SessionService": {
+          "creator_rva": 146714024,
+          "vtable_rva": 115355000
+        },
+        "AppUpdateService": {
+          "creator_rva": 146975288,
+          "vtable_rva": 115879096
+        },
+        "EditableMesh": {
+          "creator_rva": 146778056,
+          "vtable_rva": 115509888
+        },
+        "CustomEventReceiver": {
+          "creator_rva": 146952232,
+          "vtable_rva": 115842464
+        },
+        "MeshPart": {
+          "creator_rva": 147107848,
+          "vtable_rva": 116140912
+        },
+        "AngularVelocity": {
+          "creator_rva": 147132808,
+          "vtable_rva": 116178376
+        },
+        "DistortionSoundEffect": {
+          "creator_rva": 147192408,
+          "vtable_rva": 116273192
+        },
+        "TextDocument": {
+          "creator_rva": 146843640,
+          "vtable_rva": 115674408
+        },
+        "MaterialService": {
+          "creator_rva": 146906488,
+          "vtable_rva": 115775520
+        },
+        "ControllerPartSensor": {
+          "creator_rva": 147122312,
+          "vtable_rva": 116156160
+        },
+        "HapticService": {
+          "creator_rva": 146927624,
+          "vtable_rva": 115798920
+        },
+        "RTAnimationTracker": {
+          "creator_rva": 146681096,
+          "vtable_rva": 115292712
+        },
+        "BodyGyro": {
+          "creator_rva": 147128584,
+          "vtable_rva": 116163760
+        },
+        "SystemThemeService": {
+          "creator_rva": 147149208,
+          "vtable_rva": 116214864
+        },
+        "PitchShiftSoundEffect": {
+          "creator_rva": 147172680,
+          "vtable_rva": 116243288
+        },
+        "SoundShimService": {
+          "creator_rva": 147150984,
+          "vtable_rva": 116215256
+        },
+        "TextLabel": {
+          "creator_rva": 146732264,
+          "vtable_rva": 115406888
+        },
+        "AudioFilter": {
+          "creator_rva": 147223416,
+          "vtable_rva": 116345592
+        },
+        "WeldConstraint": {
+          "creator_rva": 147082744,
+          "vtable_rva": 116098136
+        },
+        "AudioEqualizer": {
+          "creator_rva": 147224600,
+          "vtable_rva": 116347720
+        },
+        "UIShadow": {
+          "creator_rva": 146720744,
+          "vtable_rva": 115372240
+        },
+        "FriendService": {
+          "creator_rva": 146936568,
+          "vtable_rva": 115812408
+        },
+        "AnalyticsService": {
+          "creator_rva": 147063016,
+          "vtable_rva": 115888128
+        },
+        "ColorGradingEffect": {
+          "creator_rva": 146770952,
+          "vtable_rva": 115502400
+        },
+        "VoxelBuffer": {
+          "creator_rva": 146826888,
+          "vtable_rva": 115638888
+        },
+        "TextGenerator": {
+          "creator_rva": 146843048,
+          "vtable_rva": 115674040
+        },
+        "ImageScreenCaptureService": {
+          "creator_rva": 146918008,
+          "vtable_rva": 115789120
+        },
+        "Actor": {
+          "creator_rva": 147063608,
+          "vtable_rva": 115888248
+        },
+        "StarterPlayer": {
+          "creator_rva": 146790536,
+          "vtable_rva": 115557992
+        },
+        "BrickColorValue": {
+          "creator_rva": 147072984,
+          "vtable_rva": 115900656
+        },
+        "LineForce": {
+          "creator_rva": 147110792,
+          "vtable_rva": 116144248
+        },
+        "Flag": {
+          "creator_rva": 146940200,
+          "vtable_rva": 115815904
+        },
+        "Backpack": {
+          "creator_rva": 146969912,
+          "vtable_rva": 115866856
+        },
+        "VideoPlayer": {
+          "creator_rva": 147076568,
+          "vtable_rva": 115906240
+        },
+        "PlayerDataRecordConfig": {
+          "creator_rva": 146797000,
+          "vtable_rva": 115587672
+        },
+        "Beam": {
+          "creator_rva": 146966904,
+          "vtable_rva": 115865896
+        },
+        "PathfindingLink": {
+          "creator_rva": 146712584,
+          "vtable_rva": 115352312
+        },
+        "VideoCaptureService": {
+          "creator_rva": 147078936,
+          "vtable_rva": 115915528
+        },
+        "RomarkRbxAnalyticsService": {
+          "creator_rva": 147281688,
+          "vtable_rva": 116419136
+        },
+        "TextSource": {
+          "creator_rva": 147143400,
+          "vtable_rva": 116201752
+        },
+        "CustomLog": {
+          "creator_rva": 147312072,
+          "vtable_rva": 116517720
+        },
+        "FeatureMatchingTable": {
+          "creator_rva": 146688360,
+          "vtable_rva": 115309336
+        },
+        "SlimDebugSettings": {
+          "creator_rva": 146866248,
+          "vtable_rva": 115713944
+        },
+        "FeatureMatchingService": {
+          "creator_rva": 146689544,
+          "vtable_rva": 115310000
+        },
+        "FacialAnimationStreamingServiceV2": {
+          "creator_rva": 147187080,
+          "vtable_rva": 116268736
+        },
+        "SerializationService": {
+          "creator_rva": 146870472,
+          "vtable_rva": 115718752
+        },
+        "TracerService": {
+          "creator_rva": 148128392,
+          "vtable_rva": 118028336
+        },
+        "Attachment": {
+          "creator_rva": 147131624,
+          "vtable_rva": 116176296
+        },
+        "Accoutrement": {
+          "creator_rva": 147064200,
+          "vtable_rva": 115888480
+        },
+        "HeightmapImporterService": {
+          "creator_rva": 146924664,
+          "vtable_rva": 115798656
+        },
+        "DataStoreGetOptions": {
+          "creator_rva": 146816008,
+          "vtable_rva": 115605856
+        },
+        "Sound": {
+          "creator_rva": 147151576,
+          "vtable_rva": 116220256
+        },
+        "AvatarEditorService": {
+          "creator_rva": 147209320,
+          "vtable_rva": 116304976
+        },
+        "PlayerEmulatorService": {
+          "creator_rva": 147294280,
+          "vtable_rva": 116473888
+        },
+        "UserInputService": {
+          "creator_rva": 146781608,
+          "vtable_rva": 115519968
+        },
+        "SunRaysEffect": {
+          "creator_rva": 146768600,
+          "vtable_rva": 115499200
+        },
+        "RbxAnalyticsService": {
+          "creator_rva": 147282280,
+          "vtable_rva": 116419176
+        },
+        "UIPadding": {
+          "creator_rva": 146722600,
+          "vtable_rva": 115376200
+        },
+        "ColorCorrectionEffect": {
+          "creator_rva": 146771544,
+          "vtable_rva": 115503160
+        },
+        "RequestOrchestratorService": {
+          "creator_rva": 147298760,
+          "vtable_rva": 116484288
+        },
+        "SurfaceGui": {
+          "creator_rva": 146735272,
+          "vtable_rva": 115423784
+        },
+        "ImageHandleAdornment": {
+          "creator_rva": 146918600,
+          "vtable_rva": 115790472
+        },
+        "Seat": {
+          "creator_rva": 147093176,
+          "vtable_rva": 116115208
+        },
+        "Motor": {
+          "creator_rva": 147105240,
+          "vtable_rva": 116131456
+        },
+        "ProjectService": {
+          "creator_rva": 146888568,
+          "vtable_rva": 115749424
+        },
+        "BoolValue": {
+          "creator_rva": 147073576,
+          "vtable_rva": 115901280
+        },
+        "Chat": {
+          "creator_rva": 146960920,
+          "vtable_rva": 115853024
+        },
+        "PrismaticConstraint": {
+          "creator_rva": 147098664,
+          "vtable_rva": 116119088
+        },
+        "ModuleScript": {
+          "creator_rva": 147176888,
+          "vtable_rva": 116248464
+        },
+        "PlatformLibraries": {
+          "creator_rva": 146892200,
+          "vtable_rva": 115752264
+        },
+        "LogReporterService": {
+          "creator_rva": 148123912,
+          "vtable_rva": 118017536
+        },
+        "AvatarClothingRules": {
+          "creator_rva": 147210600,
+          "vtable_rva": 116310648
+        },
+        "ReverbSoundEffect": {
+          "creator_rva": 147163000,
+          "vtable_rva": 116233536
+        },
+        "DebugSettings": {
+          "creator_rva": 146949784,
+          "vtable_rva": 115840432
+        },
+        "NoCollisionConstraint": {
+          "creator_rva": 147104568,
+          "vtable_rva": 116131056
+        },
+        "GenerationService": {
+          "creator_rva": 147185304,
+          "vtable_rva": 116267368
+        },
+        "Capture": {
+          "creator_rva": 146963272,
+          "vtable_rva": 115855928
+        },
+        "ImageLabel": {
+          "creator_rva": 146743848,
+          "vtable_rva": 115463272
+        },
+        "DebuggerWatch": {
+          "creator_rva": 147193000,
+          "vtable_rva": 116273248
+        },
+        "Bone": {
+          "creator_rva": 146692648,
+          "vtable_rva": 115316192
+        },
+        "Accessory": {
+          "creator_rva": 147064792,
+          "vtable_rva": 115889432
+        },
+        "Plane": {
+          "creator_rva": 147099256,
+          "vtable_rva": 116119128
+        },
+        "TextChannelWindow": {
+          "creator_rva": 147147272,
+          "vtable_rva": 116213600
+        },
+        "HiddenPlayerService": {
+          "creator_rva": 146798216,
+          "vtable_rva": 115590672
+        },
+        "ChorusSoundEffect": {
+          "creator_rva": 147198392,
+          "vtable_rva": 116279656
+        },
+        "AudioRecorder": {
+          "creator_rva": 147219128,
+          "vtable_rva": 116333072
+        },
+        "ChannelTabsConfiguration": {
+          "creator_rva": 147202168,
+          "vtable_rva": 116291584
+        },
+        "LuauExpressionService": {
+          "creator_rva": 147711928,
+          "vtable_rva": 117639536
+        },
+        "UITableLayout": {
+          "creator_rva": 146718968,
+          "vtable_rva": 115363248
+        },
+        "RemoteFunction": {
+          "creator_rva": 146883160,
+          "vtable_rva": 115735768
+        },
+        "AudioFocusService": {
+          "creator_rva": 148126616,
+          "vtable_rva": 118026728
+        },
+        "AnimationValueOutputDefinition": {
+          "creator_rva": 146702520,
+          "vtable_rva": 115323488
+        },
+        "SpringConstraint": {
+          "creator_rva": 147089480,
+          "vtable_rva": 116108328
+        },
+        "ProximityPrompt": {
+          "creator_rva": 146887896,
+          "vtable_rva": 115746776
+        },
+        "SkateboardPlatform": {
+          "creator_rva": 147091848,
+          "vtable_rva": 116113304
+        },
+        "StyleQuery": {
+          "creator_rva": 146736520,
+          "vtable_rva": 115429064
+        },
+        "VRService": {
+          "creator_rva": 146833400,
+          "vtable_rva": 115656112
+        },
+        "VideoService": {
+          "creator_rva": 147074760,
+          "vtable_rva": 115902488
+        },
+        "PlaneConstraint": {
+          "creator_rva": 147099848,
+          "vtable_rva": 116119168
+        },
+        "RocketPropulsion": {
+          "creator_rva": 147096808,
+          "vtable_rva": 116118448
+        },
+        "AchievementService": {
+          "creator_rva": 147271048,
+          "vtable_rva": 116364784
+        },
+        "ScrollingFrame": {
+          "creator_rva": 146737784,
+          "vtable_rva": 115439688
+        },
+        "TerrainModifyOperation": {
+          "creator_rva": 146821368,
+          "vtable_rva": 115616072
+        },
+        "TerrainDetail": {
+          "creator_rva": 146822552,
+          "vtable_rva": 115618752
+        },
+        "ScriptBuilder": {
+          "creator_rva": 147309032,
+          "vtable_rva": 116513288
+        },
+        "StylingService": {
+          "creator_rva": 147315400,
+          "vtable_rva": 116531368
+        },
+        "FluidForceSensor": {
+          "creator_rva": 147116184,
+          "vtable_rva": 116148464
+        },
+        "GamePassService": {
+          "creator_rva": 147291512,
+          "vtable_rva": 116450896
+        },
+        "BodyPartDescription": {
+          "creator_rva": 147205704,
+          "vtable_rva": 116297264
+        },
+        "WindowProtocolService": {
+          "creator_rva": 147967736,
+          "vtable_rva": 117866944
+        },
+        "MatchmakingService": {
+          "creator_rva": 146907080,
+          "vtable_rva": 115776304
+        },
+        "BodyForce": {
+          "creator_rva": 147129176,
+          "vtable_rva": 116164168
+        },
+        "Player": {
+          "creator_rva": 146793128,
+          "vtable_rva": 115582432
+        },
+        "Camera": {
+          "creator_rva": 146963864,
+          "vtable_rva": 115860800
+        },
+        "PackageLink": {
+          "creator_rva": 147175048,
+          "vtable_rva": 116247648
+        },
+        "InputBinding": {
+          "creator_rva": 146785944,
+          "vtable_rva": 115532088
+        },
+        "RenderingTest": {
+          "creator_rva": 146882568,
+          "vtable_rva": 115735208
+        },
+        "AnimatedImageService": {
+          "creator_rva": 146768008,
+          "vtable_rva": 115498704
+        },
+        "Tool": {
+          "creator_rva": 146840648,
+          "vtable_rva": 115671168
+        },
+        "LuaSettings": {
+          "creator_rva": 147179320,
+          "vtable_rva": 116252960
+        },
+        "InstanceExtensionsService": {
+          "creator_rva": 146915576,
+          "vtable_rva": 115787688
+        },
+        "ScriptDebugger": {
+          "creator_rva": 147159368,
+          "vtable_rva": 116230152
+        },
+        "AnimationValueNodeDefinition": {
+          "creator_rva": 146703112,
+          "vtable_rva": 115326128
+        },
+        "BackendServerScriptService": {
+          "creator_rva": 146971096,
+          "vtable_rva": 115869696
+        },
+        "UIGridLayout": {
+          "creator_rva": 146724936,
+          "vtable_rva": 115382952
+        },
+        "IXPService": {
+          "creator_rva": 146919192,
+          "vtable_rva": 115790600
+        },
+        "AdvancedDragger": {
+          "creator_rva": 147066392,
+          "vtable_rva": 115895672
+        },
+        "HingeConstraint": {
+          "creator_rva": 147113224,
+          "vtable_rva": 116146584
+        },
+        "AnimationGraphDefinition": {
+          "creator_rva": 146707368,
+          "vtable_rva": 115335984
+        },
+        "GongService": {
+          "creator_rva": 146930664,
+          "vtable_rva": 115803752
+        },
+        "PhysicsSettings": {
+          "creator_rva": 147100440,
+          "vtable_rva": 116121928
+        },
+        "UserService": {
+          "creator_rva": 146834584,
+          "vtable_rva": 115656384
+        },
+        "PlatformCloudStorageService": {
+          "creator_rva": 147966504,
+          "vtable_rva": 117862368
+        },
+        "PatchMapping": {
+          "creator_rva": 147309624,
+          "vtable_rva": 116515864
+        },
+        "TextChatService": {
+          "creator_rva": 147143992,
+          "vtable_rva": 116205712
+        },
+        "FacialAnimationStreamingServiceStats": {
+          "creator_rva": 147187672,
+          "vtable_rva": 116268856
+        },
+        "Hat": {
+          "creator_rva": 146926440,
+          "vtable_rva": 115798776
+        },
+        "SelfViewConfiguration": {
+          "creator_rva": 146871064,
+          "vtable_rva": 115718904
+        },
+        "Frame": {
+          "creator_rva": 146750104,
+          "vtable_rva": 115489160
+        },
+        "CylindricalConstraint": {
+          "creator_rva": 147120552,
+          "vtable_rva": 116153944
+        },
+        "ChatWindowConfiguration": {
+          "creator_rva": 147199656,
+          "vtable_rva": 116285016
+        },
+        "VirtualInput": {
+          "creator_rva": 148125256,
+          "vtable_rva": 118026352
+        },
+        "AudioWindSynthesizer": {
+          "creator_rva": 147216088,
+          "vtable_rva": 116327512
+        },
+        "AssetQualityService": {
+          "creator_rva": 146716520,
+          "vtable_rva": 115358048
+        },
+        "MemStorageService": {
+          "creator_rva": 146805864,
+          "vtable_rva": 115591368
+        },
+        "DataStoreIncrementOptions": {
+          "creator_rva": 146815416,
+          "vtable_rva": 115604192
+        },
+        "BodyAngularVelocity": {
+          "creator_rva": 147129768,
+          "vtable_rva": 116164864
+        },
+        "Fire": {
+          "creator_rva": 146940792,
+          "vtable_rva": 115816928
+        },
+        "Packages": {
+          "creator_rva": 147173864,
+          "vtable_rva": 116244696
+        },
+        "KeyframeSequence": {
+          "creator_rva": 146684648,
+          "vtable_rva": 115301816
+        },
+        "FriendsCallingInstance": {
+          "creator_rva": 146935976,
+          "vtable_rva": 115812336
+        },
+        "LocalScript": {
+          "creator_rva": 147179912,
+          "vtable_rva": 116253000
+        },
+        "FeatureRestrictionManager": {
+          "creator_rva": 146941384,
+          "vtable_rva": 115817560
+        },
+        "Message": {
+          "creator_rva": 146901784,
+          "vtable_rva": 115767144
+        },
+        "AvatarCreationService": {
+          "creator_rva": 146971688,
+          "vtable_rva": 115871544
+        },
+        "Geometry": {
+          "creator_rva": 146776872,
+          "vtable_rva": 115505472
+        },
+        "VideoSampler": {
+          "creator_rva": 147075976,
+          "vtable_rva": 115903288
+        },
+        "AnimationController": {
+          "creator_rva": 146707960,
+          "vtable_rva": 115337608
+        },
+        "Preloaded": {
+          "creator_rva": 147137416,
+          "vtable_rva": 116192096
+        },
+        "ProceduralBehaviorSchedulerService": {
+          "creator_rva": 146889832,
+          "vtable_rva": 115750976
+        },
+        "UICorner": {
+          "creator_rva": 146728056,
+          "vtable_rva": 115395000
+        },
+        "TerrainIterateOperation": {
+          "creator_rva": 146821960,
+          "vtable_rva": 115616240
+        },
+        "CreatorStoreService": {
+          "creator_rva": 147308296,
+          "vtable_rva": 116503992
+        },
+        "AssetPatchSettings": {
+          "creator_rva": 147312664,
+          "vtable_rva": 116518440
+        },
+        "SelectionSphere": {
+          "creator_rva": 146871656,
+          "vtable_rva": 115720192
+        },
+        "ImageButton": {
+          "creator_rva": 146744440,
+          "vtable_rva": 115467488
+        },
+        "AudioSpeechToText": {
+          "creator_rva": 147217944,
+          "vtable_rva": 116331256
+        },
+        "CommerceService": {
+          "creator_rva": 147292104,
+          "vtable_rva": 116450960
+        },
+        "ClimbController": {
+          "creator_rva": 147125048,
+          "vtable_rva": 116160032
+        },
+        "BodyColors": {
+          "creator_rva": 147206376,
+          "vtable_rva": 116299352
+        },
+        "Animator": {
+          "creator_rva": 146701832,
+          "vtable_rva": 115322776
+        },
+        "LogService": {
+          "creator_rva": 146908856,
+          "vtable_rva": 115778024
+        },
+        "StudioData": {
+          "creator_rva": 146855480,
+          "vtable_rva": 115697656
+        },
+        "DataStoreOptions": {
+          "creator_rva": 146811304,
+          "vtable_rva": 115595168
+        },
+        "FriendsCallingParticipant": {
+          "creator_rva": 146935384,
+          "vtable_rva": 115810008
+        },
+        "ClientStorageService": {
+          "creator_rva": 146816600,
+          "vtable_rva": 115607128
+        },
+        "Torque": {
+          "creator_rva": 147088296,
+          "vtable_rva": 116107728
+        },
+        "InstanceRegistryService": {
+          "creator_rva": 147180504,
+          "vtable_rva": 116253040
+        },
+        "BlurEffect": {
+          "creator_rva": 146772136,
+          "vtable_rva": 115503528
+        },
+        "InsertService": {
+          "creator_rva": 146916824,
+          "vtable_rva": 115789040
+        },
+        "AtmosphereSensor": {
+          "creator_rva": 147132216,
+          "vtable_rva": 116176992
+        },
+        "FileManagerService": {
+          "creator_rva": 147285800,
+          "vtable_rva": 116421048
+        },
+        "AvatarCollisionRules": {
+          "creator_rva": 147210008,
+          "vtable_rva": 116308520
+        },
+        "MessageBusService": {
+          "creator_rva": 147299400,
+          "vtable_rva": 116488864
+        },
+        "Vector3Value": {
+          "creator_rva": 147066984,
+          "vtable_rva": 115896128
+        },
+        "RotateV": {
+          "creator_rva": 147093848,
+          "vtable_rva": 116115424
+        },
+        "ExperienceStateCaptureService": {
+          "creator_rva": 147135816,
+          "vtable_rva": 116190040
+        },
+        "AppAgeSignalsService": {
+          "creator_rva": 147265224,
+          "vtable_rva": 116363120
+        },
+        "Folder": {
+          "creator_rva": 146937160,
+          "vtable_rva": 115813568
+        },
+        "WrapTextureTransfer": {
+          "creator_rva": 147138008,
+          "vtable_rva": 116192160
+        },
+        "PathfindingService": {
+          "creator_rva": 146711368,
+          "vtable_rva": 115349032
+        },
+        "SocialService": {
+          "creator_rva": 146863288,
+          "vtable_rva": 115712248
+        },
+        "PlaceStatsService": {
+          "creator_rva": 146892792,
+          "vtable_rva": 115752480
+        },
+        "VoiceChatInternal": {
+          "creator_rva": 148108440,
+          "vtable_rva": 117890808
+        },
+        "PlaceAssetIdsService": {
+          "creator_rva": 146715208,
+          "vtable_rva": 115355592
+        },
+        "MotorFeature": {
+          "creator_rva": 147105832,
+          "vtable_rva": 116131496
+        },
+        "FeatureMatchingSession": {
+          "creator_rva": 146688952,
+          "vtable_rva": 115309832
+        },
+        "Model": {
+          "creator_rva": 147107016,
+          "vtable_rva": 116137616
+        },
+        "Team": {
+          "creator_rva": 146851928,
+          "vtable_rva": 115691680
+        },
+        "LocalizationService": {
+          "creator_rva": 147295544,
+          "vtable_rva": 116478320
+        },
+        "StyleRule": {
+          "creator_rva": 147316616,
+          "vtable_rva": 116532784
+        },
+        "Hint": {
+          "creator_rva": 146923400,
+          "vtable_rva": 115794776
+        },
+        "Teams": {
+          "creator_rva": 146851336,
+          "vtable_rva": 115690656
+        },
+        "GroupService": {
+          "creator_rva": 146930040,
+          "vtable_rva": 115803472
+        },
+        "SoundGroup": {
+          "creator_rva": 147152248,
+          "vtable_rva": 116220792
+        },
+        "ChangeHistoryService": {
+          "creator_rva": 146961512,
+          "vtable_rva": 115853680
+        },
+        "LineHandleAdornment": {
+          "creator_rva": 146910792,
+          "vtable_rva": 115782928
+        },
+        "BackendServerStorage": {
+          "creator_rva": 146817192,
+          "vtable_rva": 115607296
+        },
+        "AudioPlayer": {
+          "creator_rva": 147219720,
+          "vtable_rva": 116336432
+        },
+        "UIListLayout": {
+          "creator_rva": 146723192,
+          "vtable_rva": 115378312
+        },
+        "SpecialMesh": {
+          "creator_rva": 146773912,
+          "vtable_rva": 115504464
+        },
+        "ExperienceNotificationService": {
+          "creator_rva": 146941976,
+          "vtable_rva": 115818040
+        },
+        "ForceField": {
+          "creator_rva": 147115592,
+          "vtable_rva": 116147808
+        },
+        "HumanoidController": {
+          "creator_rva": 146919864,
+          "vtable_rva": 115790984
+        },
+        "AccessoryDescription": {
+          "creator_rva": 147271640,
+          "vtable_rva": 116367224
+        },
+        "PointsService": {
+          "creator_rva": 146890424,
+          "vtable_rva": 115751136
+        },
+        "UserGameSettings": {
+          "creator_rva": 146835176,
+          "vtable_rva": 115664552
+        },
+        "WrapDeformer": {
+          "creator_rva": 147139816,
+          "vtable_rva": 116198104
+        },
+        "RelativeGui": {
+          "creator_rva": 146738968,
+          "vtable_rva": 115441792
+        },
+        "ParabolaAdornment": {
+          "creator_rva": 146896392,
+          "vtable_rva": 115760784
+        },
+        "SmoothVoxelsUpgraderService": {
+          "creator_rva": 146863880,
+          "vtable_rva": 115712408
+        },
+        "Motor6D": {
+          "creator_rva": 147106424,
+          "vtable_rva": 116132848
+        },
+        "SurfaceAppearance": {
+          "creator_rva": 146854888,
+          "vtable_rva": 115697152
+        },
+        "ParticleEmitter2D": {
+          "creator_rva": 146741416,
+          "vtable_rva": 115453928
+        },
+        "CustomEvent": {
+          "creator_rva": 146952904,
+          "vtable_rva": 115843384
+        },
+        "DigitsRigDescription": {
+          "creator_rva": 146690792,
+          "vtable_rva": 115312752
+        },
+        "UGCValidationService": {
+          "creator_rva": 146836360,
+          "vtable_rva": 115667232
+        },
+        "ExampleV2Service": {
+          "creator_rva": 147190040,
+          "vtable_rva": 116271448
+        },
+        "Shirt": {
+          "creator_rva": 147154008,
+          "vtable_rva": 116222568
+        },
+        "CurveAnimation": {
+          "creator_rva": 146691464,
+          "vtable_rva": 115312792
+        },
+        "MessagingService": {
+          "creator_rva": 146901192,
+          "vtable_rva": 115766992
+        },
+        "VideoCapture": {
+          "creator_rva": 147079528,
+          "vtable_rva": 115916288
+        },
+        "GroundController": {
+          "creator_rva": 147113816,
+          "vtable_rva": 116146688
+        },
+        "Highlight": {
+          "creator_rva": 146923992,
+          "vtable_rva": 115798200
+        },
+        "CoreScriptSyncService": {
+          "creator_rva": 147195944,
+          "vtable_rva": 116277400
+        },
+        "FaceAnimatorService": {
+          "creator_rva": 147189448,
+          "vtable_rva": 116270672
+        },
+        "ChannelSelectorSoundEffect": {
+          "creator_rva": 147202760,
+          "vtable_rva": 116292000
+        },
+        "Vector3Curve": {
+          "creator_rva": 146677384,
+          "vtable_rva": 115283304
+        },
+        "BuoyancySensor": {
+          "creator_rva": 147125640,
+          "vtable_rva": 116160664
+        },
+        "AccountService": {
+          "creator_rva": 148129000,
+          "vtable_rva": 118032376
+        },
+        "AssetDeliveryProxy": {
+          "creator_rva": 147313256,
+          "vtable_rva": 116520408
+        },
+        "AvatarAbilityRules": {
+          "creator_rva": 147213560,
+          "vtable_rva": 116320528
+        },
+        "GeneratedFolder": {
+          "creator_rva": 146933016,
+          "vtable_rva": 115804576
+        },
+        "Skin": {
+          "creator_rva": 147153416,
+          "vtable_rva": 116221856
+        },
+        "GamepadService": {
+          "creator_rva": 146787288,
+          "vtable_rva": 115536448
+        },
+        "Lighting": {
+          "creator_rva": 146911384,
+          "vtable_rva": 115786176
+        },
+        "BackendReplicatedStorage": {
+          "creator_rva": 146817784,
+          "vtable_rva": 115607336
+        },
+        "AudioCompressor": {
+          "creator_rva": 147228424,
+          "vtable_rva": 116357256
+        },
+        "TrussPart": {
+          "creator_rva": 147086536,
+          "vtable_rva": 116103120
+        },
+        "BloomEffect": {
+          "creator_rva": 146772728,
+          "vtable_rva": 115503896
+        },
+        "TextBoxService": {
+          "creator_rva": 146844232,
+          "vtable_rva": 115674448
+        },
+        "FlyweightService": {
+          "creator_rva": 146937752,
+          "vtable_rva": 115813624
+        },
+        "Trail": {
+          "creator_rva": 146789064,
+          "vtable_rva": 115541960
+        },
+        "StringValue": {
+          "creator_rva": 147067576,
+          "vtable_rva": 115896600
+        },
+        "RotateP": {
+          "creator_rva": 147095032,
+          "vtable_rva": 116115504
+        },
+        "AnimationFromVideoCreatorService": {
+          "creator_rva": 147269784,
+          "vtable_rva": 116363232
+        },
+        "RecommendationService": {
+          "creator_rva": 147723288,
+          "vtable_rva": 117770288
+        },
+        "StarterGear": {
+          "creator_rva": 146857848,
+          "vtable_rva": 115701184
+        },
+        "PlayerDataRecord": {
+          "creator_rva": 146796408,
+          "vtable_rva": 115587152
+        },
+        "TorsionSpringConstraint": {
+          "creator_rva": 147087704,
+          "vtable_rva": 116107000
+        },
+        "PlayerGui": {
+          "creator_rva": 146739560,
+          "vtable_rva": 115443136
+        },
+        "DialogChoice": {
+          "creator_rva": 146947416,
+          "vtable_rva": 115834728
+        },
+        "Sky": {
+          "creator_rva": 146868104,
+          "vtable_rva": 115717808
+        },
+        "BallSocketConstraint": {
+          "creator_rva": 147131032,
+          "vtable_rva": 116175112
+        },
+        "TextChannel": {
+          "creator_rva": 147147944,
+          "vtable_rva": 116214504
+        },
+        "Pants": {
+          "creator_rva": 147173272,
+          "vtable_rva": 116244000
+        },
+        "CompositeValueCurve": {
+          "creator_rva": 146692056,
+          "vtable_rva": 115315760
+        },
+        "PlayerViewService": {
+          "creator_rva": 146791944,
+          "vtable_rva": 115563632
+        },
+        "ConfigService": {
+          "creator_rva": 146958520,
+          "vtable_rva": 115847568
+        },
+        "PlatformFriendsService": {
+          "creator_rva": 147967096,
+          "vtable_rva": 117863928
+        },
+        "ControllerManager": {
+          "creator_rva": 147122984,
+          "vtable_rva": 116158088
+        },
+        "DataStoreSetOptions": {
+          "creator_rva": 146808872,
+          "vtable_rva": 115592592
+        },
+        "AdPortal": {
+          "creator_rva": 147276728,
+          "vtable_rva": 116386456
+        },
+        "WedgePart": {
+          "creator_rva": 147083416,
+          "vtable_rva": 116098176
+        },
+        "ScriptRegistrationService": {
+          "creator_rva": 147157000,
+          "vtable_rva": 116226392
+        },
+        "TerrainReadOperation": {
+          "creator_rva": 146820152,
+          "vtable_rva": 115609576
+        },
+        "FloorWire": {
+          "creator_rva": 146938344,
+          "vtable_rva": 115815016
+        },
+        "StarterCharacterScripts": {
+          "creator_rva": 146858440,
+          "vtable_rva": 115701224
+        },
+        "BadgeService": {
+          "creator_rva": 146969320,
+          "vtable_rva": 115866640
+        },
+        "NonReplicatedCSGDictionaryService": {
+          "creator_rva": 146774504,
+          "vtable_rva": 115504504
+        },
+        "Sparkles": {
+          "creator_rva": 146861384,
+          "vtable_rva": 115704352
+        },
+        "MLSession": {
+          "creator_rva": 147296920,
+          "vtable_rva": 116480728
+        },
+        "Snap": {
+          "creator_rva": 147090664,
+          "vtable_rva": 116109920
+        },
+        "NumberPose": {
+          "creator_rva": 146682872,
+          "vtable_rva": 115299632
+        },
+        "RayValue": {
+          "creator_rva": 147068168,
+          "vtable_rva": 115897192
+        },
+        "RopeConstraint": {
+          "creator_rva": 147095624,
+          "vtable_rva": 116116264
+        },
+        "DockWidgetPluginGui": {
+          "creator_rva": 147191816,
+          "vtable_rva": 116272792
+        },
+        "HttpRbxApiService": {
+          "creator_rva": 146921624,
+          "vtable_rva": 115792272
+        },
+        "Status": {
+          "creator_rva": 147149800,
+          "vtable_rva": 116215176
+        },
+        "NetworkServer": {
+          "creator_rva": 147725944,
+          "vtable_rva": 117775336
+        },
+        "HiddenSurfaceRemovalAsset": {
+          "creator_rva": 147182936,
+          "vtable_rva": 116264952
+        },
+        "AppRatingPromptService": {
+          "creator_rva": 147264040,
+          "vtable_rva": 116362800
+        },
+        "Smoke": {
+          "creator_rva": 146864472,
+          "vtable_rva": 115713432
+        },
+        "HopperBin": {
+          "creator_rva": 146922808,
+          "vtable_rva": 115793672
+        },
+        "TrackerStreamAnimation": {
+          "creator_rva": 146678648,
+          "vtable_rva": 115285728
+        },
+        "RuntimeContentService": {
+          "creator_rva": 146877208,
+          "vtable_rva": 115727208
+        },
+        "StateMachineTransitionDefinition": {
+          "creator_rva": 146679240,
+          "vtable_rva": 115287472
+        },
+        "PlayerData": {
+          "creator_rva": 146797592,
+          "vtable_rva": 115590264
+        },
+        "WireframeHandleAdornment": {
+          "creator_rva": 146823880,
+          "vtable_rva": 115635528
+        },
+        "PackageService": {
+          "creator_rva": 147174456,
+          "vtable_rva": 116245064
+        },
+        "GameSettings": {
+          "creator_rva": 146933608,
+          "vtable_rva": 115804976
+        },
+        "AudioEcho": {
+          "creator_rva": 147225896,
+          "vtable_rva": 116352576
+        },
+        "VelocityMotor": {
+          "creator_rva": 147084008,
+          "vtable_rva": 116098976
+        },
+        "AudioChorus": {
+          "creator_rva": 147229016,
+          "vtable_rva": 116358312
+        },
+        "ScriptDebuggerService": {
+          "creator_rva": 147158776,
+          "vtable_rva": 116228120
+        },
+        "StateMachineDefinition": {
+          "creator_rva": 146679912,
+          "vtable_rva": 115289072
+        },
+        "TextButton": {
+          "creator_rva": 146734088,
+          "vtable_rva": 115413896
+        },
+        "PartOperation": {
+          "creator_rva": 147102808,
+          "vtable_rva": 116129560
+        },
+        "RealtimeMedia": {
+          "creator_rva": 146884936,
+          "vtable_rva": 115737536
+        },
+        "ObjectValue": {
+          "creator_rva": 147068760,
+          "vtable_rva": 115897616
+        },
+        "VirtualInputManager": {
+          "creator_rva": 148124664,
+          "vtable_rva": 118026152
+        },
+        "Rotate": {
+          "creator_rva": 147094440,
+          "vtable_rva": 116115464
+        },
+        "TestCoordinatorService": {
+          "creator_rva": 146848392,
+          "vtable_rva": 115683784
+        },
+        "WrapLayer": {
+          "creator_rva": 147139224,
+          "vtable_rva": 116197848
+        }
+      },
+      "volatile": "start/end/classes are live heap values for this session"
+    },
+    "name_registry": {
+      "slot_rva": 138682400,
+      "object_va": 1782672988240,
+      "table_offset": 80,
+      "slots": 239014,
+      "start_va": 1782672984352,
+      "end_va": 1782676808576,
+      "empty_va": 1782672988285,
+      "creator_keys_present": 168,
+      "creator_keys_probed": 314,
+      "sample_names": [
+        "AllTime",
+        "LimitMethod",
+        "Pointer",
+        "NearPlaneZ",
+        "UserAudio",
+        "StudsOffset",
+        "targetChatLines",
+        "RibbonTool",
+        "GameEnded",
+        "World81",
+        "Unsynced",
+        "IsTeamTest"
+      ],
+      "other_candidates": [
+        {
+          "slot_rva": 138017512,
+          "slots": 349960,
+          "creator_keys": 168
+        },
+        {
+          "slot_rva": 138017520,
+          "slots": 349960,
+          "creator_keys": 168
+        },
+        {
+          "slot_rva": 138017440,
+          "slots": 349399,
+          "creator_keys": 168
+        },
+        {
+          "slot_rva": 138017448,
+          "slots": 349399,
+          "creator_keys": 168
+        },
+        {
+          "slot_rva": 138016584,
+          "slots": 349153,
+          "creator_keys": 168
+        }
+      ]
+    },
+    "parent": {
+      "chosen": {
+        "desc_rva": 139606192,
+        "vtable_rva": 116785408,
+        "shared_by": 1,
+        "setter_rva": 8091536,
+        "setter_head": "48895c2410565741564883ec30498bf0",
+        "deleting_dtor": false,
+        "reason": ""
+      },
+      "candidates": [
+        {
+          "desc_rva": 139606192,
+          "vtable_rva": 116785408,
+          "shared_by": 1,
+          "setter_rva": 8091536,
+          "setter_head": "48895c2410565741564883ec30498bf0",
+          "deleting_dtor": false,
+          "reason": ""
+        },
+        {
+          "desc_rva": 146764000,
+          "vtable_rva": 116681936,
+          "shared_by": 3284,
+          "setter_rva": 29976688,
+          "setter_head": "40534883ec20488bda33c0493900498d",
+          "deleting_dtor": false,
+          "reason": "shared generic descriptor vtable"
+        },
+        {
+          "desc_rva": 147266016,
+          "vtable_rva": 116681936,
+          "shared_by": 3284,
+          "setter_rva": 29976688,
+          "setter_head": "40534883ec20488bda33c0493900498d",
+          "deleting_dtor": false,
+          "reason": "shared generic descriptor vtable"
+        },
+        {
+          "desc_rva": 147266584,
+          "vtable_rva": 116681936,
+          "shared_by": 3284,
+          "setter_rva": 29976688,
+          "setter_head": "40534883ec20488bda33c0493900498d",
+          "deleting_dtor": false,
+          "reason": "shared generic descriptor vtable"
+        },
+        {
+          "desc_rva": 147266936,
+          "vtable_rva": 116681936,
+          "shared_by": 3284,
+          "setter_rva": 29976688,
+          "setter_head": "40534883ec20488bda33c0493900498d",
+          "deleting_dtor": false,
+          "reason": "shared generic descriptor vtable"
+        }
+      ],
+      "signature": "void(desc, instance, parent) - engine typed setter"
+    },
+    "notes": [
+      "59 registry candidates share the same name arena; picked the one whose table sits at +0x50 (reference layout) with the deepest range",
+      "Alloc::Malloc is NOT resolved. Strings longer than 15 bytes (Content uris, long names) need it. Provide --malloc <rva> from a trusted dump for this exact build."
+    ]
+  }
+}

@@ -1,9 +1,11 @@
+pub mod call_gate;
 pub mod camera;
 pub mod connection;
 pub mod constants;
 pub mod context;
 pub mod humanoid;
 pub mod instance;
+pub mod instance_new;
 pub mod math;
 pub mod part;
 pub mod player;

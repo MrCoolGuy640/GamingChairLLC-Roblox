@@ -58,6 +58,10 @@
   //
   // The row is shown while that option is ON. Used by Fly's Boost rows
   // (boost_enabled) and Floor Margin (no_void).
+  //
+  // A value comparison is supported too: "cheat.field=value" shows the row
+  // only while the dropdown/option holds that value (ESP's method-specific
+  // rows).
   // ---------------------------------------------
   function optionElement(name, field) {
     const option = document.querySelector(
@@ -75,11 +79,21 @@
   }
 
   function conditionMet(spec) {
-    const parts = String(spec || "").split(".");
-    if (parts.length !== 2) return true;
+    const text = String(spec || "");
+    const dot = text.indexOf(".");
+    if (dot < 0) return true;
 
-    const element = optionElement(parts[0], parts[1]);
+    const name = text.slice(0, dot);
+    const rest = text.slice(dot + 1);
+
+    const equals = rest.indexOf("=");
+    const field = equals < 0 ? rest : rest.slice(0, equals);
+    const expected = equals < 0 ? null : rest.slice(equals + 1);
+
+    const element = optionElement(name, field);
     if (!element) return true;
+
+    if (expected !== null) return String(element.value) === expected;
 
     if (element.type === "checkbox") return !!element.checked;
     return !!element.value && element.value !== "0" && element.value !== "false";
@@ -240,7 +254,13 @@
   });
 
   document.querySelectorAll(".cheat-select").forEach((element) => {
-    element.addEventListener("change", () => saveOption(element, element.value));
+    element.addEventListener("change", () => {
+      saveOption(element, element.value);
+
+      // A value condition ("cheat.field=value") does not map to a single
+      // `data-visible-when` attribute, so refresh every conditional row.
+      applyVisibility();
+    });
   });
 
   // Initial pass: the HTML defaults decide what starts visible.

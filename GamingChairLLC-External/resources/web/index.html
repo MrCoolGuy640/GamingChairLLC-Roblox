@@ -150,6 +150,70 @@
 
           <div class="section-block">
             <div class="section-block-header">
+              <h2>ESP</h2>
+            </div>
+            <div class="control-list">
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">ESP Enabled</span>
+                  <span class="control-desc">Outline other players through walls.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-toggle" data-cheat="esp">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">ESP Keybind</span>
+                  <span class="control-desc">Toggle ESP in game. Backspace clears.</span>
+                </div>
+                <button class="keybind-btn cheat-keybind" id="espKeybindBtn" data-cheat="esp" type="button">None</button>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Method</span>
+                  <span class="control-desc">How the highlight is drawn. Future methods may add their own settings.</span>
+                </div>
+                <select class="dropdown cheat-select" data-cheat="esp" data-value="method">
+                  <option value="native_highlight">Native (Highlight)</option>
+                </select>
+              </div>
+              <div class="control-row">
+                <div class="control-text">
+                  <span class="control-title">Highlight Local Player</span>
+                  <span class="control-desc">Also outline your own character. Independent of the method.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" class="cheat-option" data-cheat="esp" data-value="highlight_local">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+              <div class="control-row" data-visible-when="esp.method=native_highlight">
+                <div class="control-text">
+                  <span class="control-title">Fill Transparency</span>
+                  <span class="control-desc">0 is a solid fill, 1 is invisible. Only the outline remains at 1.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="esp" data-value="fill_transparency">
+                  <input type="range" class="slider" min="0" max="1" step="0.05" value="0.5">
+                  <input type="number" class="slider-input" min="0" max="1" step="0.05" value="0.5">
+                </div>
+              </div>
+              <div class="control-row" data-visible-when="esp.method=native_highlight">
+                <div class="control-text">
+                  <span class="control-title">Outline Transparency</span>
+                  <span class="control-desc">0 draws a solid outline, 1 hides it.</span>
+                </div>
+                <div class="slider-control cheat-slider" data-cheat="esp" data-value="outline_transparency">
+                  <input type="range" class="slider" min="0" max="1" step="0.05" value="0">
+                  <input type="number" class="slider-input" min="0" max="1" step="0.05" value="0">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div class="section-block-header">
               <h2>Fly</h2>
             </div>
             <div class="control-list">

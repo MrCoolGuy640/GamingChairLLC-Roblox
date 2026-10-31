@@ -12,6 +12,7 @@
 //! *running* state via `ticked_apply_sync`.
 
 mod aim;
+mod esp;
 mod fling;
 mod fly;
 mod noclip;
@@ -27,6 +28,7 @@ use parking_lot::Mutex;
 use serde_json::{json, Map, Value};
 
 pub use aim::AimCheat;
+pub use esp::EspCheat;
 pub use fling::FlingCheat;
 pub use fly::FlyCheat;
 pub use noclip::NoClipCheat;
@@ -472,6 +474,7 @@ impl Cheats {
                 Arc::new(SweepCheat::new(shared.clone())),
                 Arc::new(AimCheat::new(shared)),
                 Arc::new(NoClipCheat::new()),
+                Arc::new(EspCheat::new()),
             ],
         }
     }

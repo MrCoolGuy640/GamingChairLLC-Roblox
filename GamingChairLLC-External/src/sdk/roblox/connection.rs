@@ -13,6 +13,7 @@ use crate::sdk::roblox::camera::Camera;
 use crate::sdk::roblox::context::GameContext;
 use crate::sdk::roblox::humanoid::Humanoid;
 use crate::sdk::roblox::instance::Instance;
+use crate::sdk::roblox::instance_new::InstanceNew;
 use crate::sdk::roblox::part::Part;
 use crate::sdk::roblox::player::Player;
 use crate::sdk::roblox::utils;
@@ -24,6 +25,7 @@ const ATTACH_RETRY: Duration = Duration::from_millis(200);
 pub struct Roblox {
     ctx: Arc<GameContext>,
     pid: u32,
+    instance_new: InstanceNew,
 }
 
 impl Roblox {
@@ -49,10 +51,12 @@ impl Roblox {
             .context("opening the game process")?;
         let freezer = MemoryFreezer::start(Arc::clone(&memory));
         let ctx = GameContext::new(memory, freezer, offsets);
+        let instance_new = InstanceNew::new(Arc::clone(&ctx));
 
         let roblox = Arc::new(Self {
             ctx,
             pid: process.pid,
+            instance_new,
         });
 
         // The DataModel pointer is null while the client is still loading.
@@ -86,6 +90,11 @@ impl Roblox {
 
     pub fn instance(&self, address: u64) -> Instance {
         Instance::new(address, Arc::clone(&self.ctx))
+    }
+
+    /// The reflective `Instance.new` runtime.
+    pub fn instance_new(&self) -> &InstanceNew {
+        &self.instance_new
     }
 
     pub fn get_datamodel(&self) -> Result<Instance> {
@@ -335,6 +344,7 @@ impl Roblox {
 
 impl Drop for Roblox {
     fn drop(&mut self) {
+        self.instance_new.shutdown();
         self.ctx.freezer.stop();
         log::debug!(
             target: "GamingChairLLC.roblox",

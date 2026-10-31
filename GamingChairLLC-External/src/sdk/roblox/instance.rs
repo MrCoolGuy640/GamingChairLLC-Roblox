@@ -38,6 +38,12 @@ impl Instance {
             .write_bytes(self.address + offset, &[u8::from(value)])
     }
 
+    pub fn write_float(&self, offset: u64, value: f32) -> bool {
+        self.ctx
+            .memory
+            .write_bytes(self.address + offset, &value.to_le_bytes())
+    }
+
     // -- field reads -----------------------------------------------------
 
     /// `i64`/pointer-sized field at `offset` from this instance's address.
@@ -94,6 +100,89 @@ impl Instance {
         self.fetch_string(class_name)
     }
 
+    /// Set the instance's `Name`.
+    ///
+    /// This is the write-side counterpart to [`Instance::get_name`] and a port
+    /// of the Python SDK: allocate a fresh 0x20-byte `rbx_string` struct in the
+    /// target, point `NameContainer` at it, then fill the struct. Inline
+    /// strings (<= 15 bytes) live in the struct itself; longer strings get a
+    /// separate heap buffer and a data pointer.
+    ///
+    /// The engine does not own the block `NameContainer` points at afterwards,
+    /// so destroying this instance makes it free foreign memory. This matches
+    /// the Python behaviour and is only safe for instances whose lifetime the
+    /// caller controls.
+    pub fn set_name(&self, name: &str) -> bool {
+        let offsets = &self.ctx.offsets.instance;
+        let allocated = self.ctx.memory.allocate(0x20);
+        if allocated == 0 {
+            return false;
+        }
+
+        if !self
+            .ctx
+            .memory
+            .write_ptr(self.address.wrapping_add(offsets.name_container), allocated)
+        {
+            return false;
+        }
+
+        self.write_string(allocated, name)
+    }
+
+    fn write_string(&self, address: u64, value: &str) -> bool {
+        let encoded = value.as_bytes();
+        let length = encoded.len();
+
+        if length > 15 {
+            let existing = self.ctx.memory.read_bytes(address, 0x20);
+            let (mut capacity, mut data_pointer) = if existing.len() >= 0x20 {
+                (
+                    u64::from_le_bytes(existing[0x18..0x20].try_into().unwrap_or([0; 8])),
+                    u64::from_le_bytes(existing[0..8].try_into().unwrap_or([0; 8])),
+                )
+            } else {
+                (0, 0)
+            };
+
+            while (length as u64) > capacity {
+                capacity = capacity * 2 + 1;
+                if capacity > 64 * 1024 * 1024 {
+                    return false;
+                }
+            }
+
+            if data_pointer == 0 {
+                data_pointer = self.ctx.memory.allocate(capacity as usize);
+                if data_pointer == 0 {
+                    return false;
+                }
+            }
+
+            self.ctx
+                .memory
+                .write_ptr(address, data_pointer)
+                && self
+                    .ctx
+                    .memory
+                    .write_bytes(address + 0x10, &(length as u64).to_le_bytes())
+                && self
+                    .ctx
+                    .memory
+                    .write_bytes(address + 0x18, &capacity.to_le_bytes())
+                && self.ctx.memory.write_bytes(data_pointer, encoded)
+        } else {
+            self.ctx
+                .memory
+                .write_bytes(address + 0x10, &(length as u64).to_le_bytes())
+                && self
+                    .ctx
+                    .memory
+                    .write_bytes(address + 0x18, &15u64.to_le_bytes())
+                && self.ctx.memory.write_bytes(address, encoded)
+        }
+    }
+
     // -- hierarchy -------------------------------------------------------
 
     pub fn get_children(&self) -> Vec<Instance> {
@@ -131,6 +220,13 @@ impl Instance {
         self.get_children()
             .into_iter()
             .find(|child| child.get_name() == name)
+    }
+
+    /// Raw `Instance.Parent` pointer. `0` means the instance is unparented.
+    pub fn parent_address(&self) -> u64 {
+        self.ctx
+            .memory
+            .read_ptr(self.address.wrapping_add(self.ctx.offsets.instance.parent))
     }
 
     pub fn find_first_child_of_class(&self, class_name: &str) -> Option<Instance> {
