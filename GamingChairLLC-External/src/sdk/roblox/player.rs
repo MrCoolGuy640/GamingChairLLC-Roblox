@@ -53,15 +53,26 @@ impl Player {
         None
     }
 
+    /// Whether this instance is `Players.LocalPlayer`.
+    ///
+    /// `LocalPlayer` is a field on the Players service, not on a Player, so the
+    /// pointer has to be read from this player's parent (`Players`). Reading it
+    /// from the Player itself always yielded a bogus pointer, which is why the
+    /// ESP's "Highlight Local Player" toggle used to have no effect.
     pub fn is_local_player(&self) -> bool {
         let offsets = &self.instance.ctx().offsets.player;
+        let parent = self.instance.parent_address();
+        if parent == 0 {
+            return false;
+        }
+
         let local = self
             .instance
             .ctx()
             .memory
-            .read_ptr(self.instance.address().wrapping_add(offsets.local_player));
+            .read_ptr(parent.wrapping_add(offsets.local_player));
 
-        local == self.instance.address()
+        local != 0 && local == self.instance.address()
     }
 
     /// `Player.UserId`. `0` when the offset is unavailable or the read failed.

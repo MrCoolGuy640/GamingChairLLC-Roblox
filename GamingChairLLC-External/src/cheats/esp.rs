@@ -19,7 +19,7 @@ use parking_lot::Mutex;
 use serde_json::{json, Value};
 
 use super::{boolean, number, text, TickedCheat, TickedMeta};
-use crate::sdk::roblox::{Instance, Roblox};
+use crate::sdk::roblox::{player::Player, Instance, Roblox};
 
 /// How often characters are re-scanned. Matches the Python watcher.
 const TICK_INTERVAL: f64 = 2.0;
@@ -58,8 +58,11 @@ impl EspCheat {
             return Ok(());
         }
 
-        let fill = number(values, "fill_transparency", 0.5).clamp(0.0, 1.0) as f32;
-        let outline = number(values, "outline_transparency", 0.0).clamp(0.0, 1.0) as f32;
+        // Slider values are opacity: 0 = fully transparent, 1 = fully
+        // coloured. Roblox stores the inverse (`FillTransparency` /
+        // `OutlineTransparency`).
+        let fill = engine_transparency(number(values, "fill_opacity", 0.5));
+        let outline = engine_transparency(number(values, "outline_opacity", 1.0));
         let highlight_local = boolean(values, "highlight_local", false);
 
         // No DataModel yet (loading screen): leave the tracked map alone, the
@@ -68,60 +71,83 @@ impl EspCheat {
             return Ok(());
         };
 
-        let mut wanted: Vec<(u64, Instance)> = Vec::new();
-        let mut unresolved: Vec<String> = Vec::new();
+        let players = roblox.get_player_list();
+        if players.is_empty() {
+            // A respawn (or a transient read failure) can empty this list.
+            // Treating that as "everyone left" is what used to unparent every
+            // highlight in the game; an empty list carries no information.
+            log::debug!(
+                target: "GamingChairLLC.esp",
+                "Player list is empty; keeping the existing highlights"
+            );
+            return Ok(());
+        }
 
-        for player in roblox.get_player_list() {
+        // `LocalPlayer` lives on the Players service, never on a Player
+        // instance. Compare against the DataModel's pointer, and fall back to
+        // the name when the pointer is temporarily unreadable.
+        let local = roblox.get_local_player();
+        let local_address = local.as_ref().map(|player| player.address());
+        let local_name = local
+            .as_ref()
+            .map(|player| player.get_name())
+            .unwrap_or_default();
+
+        let mut wanted: Vec<(u64, Instance)> = Vec::new();
+
+        for player in &players {
             if player.get_class_name() != "Player" {
                 continue;
             }
 
-            if !highlight_local && player.is_local_player() {
+            // Addresses are exact; the name is a second, independent check so a
+            // stale LocalPlayer pointer can never make the toggle leak a
+            // highlight onto the local character.
+            let is_local = local_address == Some(player.address())
+                || (!local_name.is_empty() && player.get_name() == local_name);
+            if !highlight_local && is_local {
                 continue;
             }
 
-            match player.character() {
-                Some(character) => wanted.push((character.address(), character)),
-                // Some dumps do not document the character pointer; fall back
-                // to the name lookup the Python watcher used.
-                None => {
-                    let name = player.get_name();
-                    if !name.is_empty() {
-                        unresolved.push(name);
-                    }
-                }
-            }
-        }
-
-        if !unresolved.is_empty() {
-            let children = workspace.get_children();
-            for name in unresolved {
-                if let Some(character) = children
-                    .iter()
-                    .find(|child| child.get_name() == name && child.get_class_name() == "Model")
-                {
-                    wanted.push((character.address(), character.clone()));
-                }
+            // A joining/respawning player has no model yet; skip just that
+            // player for this tick instead of distrusting the whole list.
+            if let Some(character) = current_character(player, &workspace) {
+                wanted.push((character.address(), character));
             }
         }
 
         let mut tracked = self.highlights.lock();
         let mut error: Option<String> = None;
 
-        // Characters that left (or respawned under a new model) first: their
-        // highlight is still parented, so it is usually safe to unparent.
-        let characters: Vec<u64> = tracked.keys().copied().collect();
-        for character in characters {
-            let highlight = tracked[&character];
-            let still_wanted = wanted.iter().any(|(address, _)| *address == character);
+        // Drop entries whose character model left Workspace *and* whose
+        // Highlight is gone with it. A respawn or a player leaving destroys the
+        // model, so there is nothing to unparent and every other character's
+        // highlight must stay untouched. Keeping the entry when either check
+        // still sees the object avoids pruning on a partial/throttled read.
+        let children = workspace.get_children();
+        if !children.is_empty() {
+            tracked.retain(|character, highlight| {
+                children.iter().any(|child| child.address() == *character)
+                    || is_live(roblox, *highlight, *character)
+            });
+        }
 
-            if !still_wanted {
-                tracked.remove(&character);
-                release(roblox, highlight);
-            } else if !is_live(roblox, highlight, character) {
-                // The engine destroyed it along with the character; forget it
-                // without writing to what may now be a different object.
-                tracked.remove(&character);
+        // With the toggle off, clear the highlight from the local player's
+        // current character *and* from a previous body that is still in
+        // Workspace. Name matching catches the dead body; the retain above
+        // catches models the engine already destroyed.
+        if !highlight_local && !local_name.is_empty() {
+            let stale: Vec<u64> = tracked
+                .keys()
+                .copied()
+                .filter(|address| !wanted.iter().any(|(wanted, _)| wanted == address))
+                .filter(|address| roblox.instance(*address).get_name() == local_name)
+                .collect();
+
+            for character in stale {
+                if let Some(highlight) = tracked.remove(&character) {
+                    release(roblox, highlight);
+                }
             }
         }
 
@@ -236,6 +262,29 @@ fn is_live(roblox: &Arc<Roblox>, highlight: u64, character: u64) -> bool {
     instance.get_class_name() == HIGHLIGHT_CLASS && instance.parent_address() == character
 }
 
+/// The character model a player currently controls.
+///
+/// Prefers the direct `Player.Character`/`ModelInstance` pointer and falls back
+/// to the player's name under Workspace, which is the lookup the Python watcher
+/// used. Returning `None` means "not spawned yet", never "player is gone".
+fn current_character(player: &Player, workspace: &Instance) -> Option<Instance> {
+    if let Some(character) = player.character() {
+        if character.address() != 0 {
+            return Some(character);
+        }
+    }
+
+    let name = player.get_name();
+    if name.is_empty() {
+        return None;
+    }
+
+    workspace
+        .get_children()
+        .into_iter()
+        .find(|child| child.get_name() == name && child.get_class_name() == "Model")
+}
+
 fn release(roblox: &Arc<Roblox>, highlight: u64) {
     if highlight == 0 || !roblox.instance_new().is_ready() {
         return;
@@ -261,13 +310,19 @@ fn set_style(roblox: &Arc<Roblox>, highlight: &Instance, fill: f32, outline: f32
     highlight.write_float(offsets.outline_transparency, outline);
 }
 
+/// The slider is opacity (0 = fully transparent, 1 = fully coloured) while
+/// Roblox's fields are transparency (0 = fully opaque, 1 = invisible).
+fn engine_transparency(opacity: f64) -> f32 {
+    1.0 - opacity.clamp(0.0, 1.0) as f32
+}
+
 pub fn default_values() -> Value {
     json!({
         "keybind": "H",
         "method": METHOD_NATIVE_HIGHLIGHT,
         "highlight_local": false,
-        "fill_transparency": 0.5,
-        "outline_transparency": 0.0,
+        "fill_opacity": 0.5,
+        "outline_opacity": 1.0,
     })
 }
 
@@ -276,6 +331,15 @@ mod tests {
     use std::time::Duration;
 
     use super::*;
+
+    #[test]
+    fn opacity_is_written_as_inverted_engine_transparency() {
+        assert_eq!(engine_transparency(1.0), 0.0, "1 = fully coloured");
+        assert_eq!(engine_transparency(0.0), 1.0, "0 = fully transparent");
+        assert!((engine_transparency(0.2) - 0.8).abs() < 1e-6);
+        assert_eq!(engine_transparency(2.0), 0.0, "clamped");
+        assert_eq!(engine_transparency(-1.0), 1.0, "clamped");
+    }
 
     /// Manual end-to-end check against a live client: install the gate, create
     /// real `Highlight` objects, parent them and remove them again. This is the
@@ -310,10 +374,40 @@ mod tests {
         // Include the local player so this works in a solo place.
         values["highlight_local"] = json!(true);
 
+        let local_character = roblox
+            .get_local_character()
+            .expect("local character")
+            .address();
+
         esp.on_start(&roblox, &values).expect("esp start");
 
         let created = esp.highlights.lock().len();
         println!("ESP created {created} highlight(s)");
+        assert!(
+            esp.highlights.lock().contains_key(&local_character),
+            "toggle on did not highlight the local player"
+        );
+
+        // Turning the toggle off must remove the local highlight while leaving
+        // every other player's highlight alone.
+        values["highlight_local"] = json!(false);
+        esp.sync(&roblox, &values).expect("toggle off");
+        assert!(
+            !esp.highlights.lock().contains_key(&local_character),
+            "toggle off left the local highlight parented"
+        );
+        println!(
+            "toggle off removed the local highlight; {} remain",
+            esp.highlights.lock().len()
+        );
+
+        // Turning it back on must re-add exactly the local player's highlight.
+        values["highlight_local"] = json!(true);
+        esp.sync(&roblox, &values).expect("toggle on");
+        assert!(
+            esp.highlights.lock().contains_key(&local_character),
+            "toggle on did not re-add the local highlight"
+        );
 
         std::thread::sleep(Duration::from_secs(2));
 
