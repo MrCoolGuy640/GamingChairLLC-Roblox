@@ -35,6 +35,10 @@ pub struct EspCheat {
     /// Character model address -> highlight instance address, for the
     /// highlights this cheat created.
     highlights: Mutex<HashMap<u64, u64>>,
+    /// The `(fill, outline, highlight_local)` settings currently baked into the
+    /// engine objects. Highlight styling is copied into the engine's render
+    /// object at creation, so a style change has to rebuild the highlights.
+    settings: Mutex<Option<(f32, f32, bool)>>,
 }
 
 impl EspCheat {
@@ -42,6 +46,7 @@ impl EspCheat {
         Self {
             meta: TickedMeta::with_values(default_values()),
             highlights: Mutex::new(HashMap::new()),
+            settings: Mutex::new(None),
         }
     }
 
@@ -61,9 +66,7 @@ impl EspCheat {
         // Slider values are opacity: 0 = fully transparent, 1 = fully
         // coloured. Roblox stores the inverse (`FillTransparency` /
         // `OutlineTransparency`).
-        let fill = engine_transparency(number(values, "fill_opacity", 0.5));
-        let outline = engine_transparency(number(values, "outline_opacity", 1.0));
-        let highlight_local = boolean(values, "highlight_local", false);
+        let (fill, outline, highlight_local) = settings_from(values);
 
         // No DataModel yet (loading screen): leave the tracked map alone, the
         // pruner below would not be able to tell "gone" from "unreadable".
@@ -82,6 +85,18 @@ impl EspCheat {
             );
             return Ok(());
         }
+
+        // Highlight styling is copied into the engine's render object when the
+        // instance is created; rewriting the fields of an already-parented
+        // highlight does not re-render it. Rebuild the objects when either
+        // style value changes — this is what switching ESP off and on used to
+        // do by hand.
+        let settings = (fill, outline, highlight_local);
+        let style_changed = {
+            let mut last = self.settings.lock();
+            let previous = last.replace(settings);
+            previous.map_or(true, |previous| previous.0 != fill || previous.1 != outline)
+        };
 
         // `LocalPlayer` lives on the Players service, never on a Player
         // instance. Compare against the DataModel's pointer, and fall back to
@@ -118,6 +133,12 @@ impl EspCheat {
 
         let mut tracked = self.highlights.lock();
         let mut error: Option<String> = None;
+
+        if style_changed && !tracked.is_empty() {
+            for (_, highlight) in tracked.drain() {
+                release(roblox, highlight);
+            }
+        }
 
         // Drop entries whose character model left Workspace *and* whose
         // Highlight is gone with it. A respawn or a player leaving destroys the
@@ -199,11 +220,16 @@ impl EspCheat {
 
     /// Unparent everything this cheat created.
     fn clear(&self, roblox: &Arc<Roblox>) {
-        let mut tracked = self.highlights.lock();
+        {
+            let mut tracked = self.highlights.lock();
 
-        for (_, highlight) in tracked.drain() {
-            release(roblox, highlight);
+            for (_, highlight) in tracked.drain() {
+                release(roblox, highlight);
+            }
         }
+
+        // The next start has to build fresh objects, whatever the style is.
+        *self.settings.lock() = None;
     }
 }
 
@@ -236,6 +262,22 @@ impl TickedCheat for EspCheat {
 
     fn on_start(&self, roblox: &Arc<Roblox>, values: &Value) -> Result<(), String> {
         self.sync(roblox, values)
+    }
+
+    /// Slider release (and the local-player switch) bump the values epoch, so
+    /// apply the change right away instead of waiting for the next 2 s tick.
+    fn on_values(&self, roblox: &Arc<Roblox>, values: &Value) {
+        let settings = settings_from(values);
+        if self.settings.lock().as_ref() == Some(&settings) {
+            return;
+        }
+
+        if let Err(err) = self.sync(roblox, values) {
+            log::debug!(
+                target: "GamingChairLLC.esp",
+                "ESP update could not complete: {err}"
+            );
+        }
     }
 
     fn on_tick(&self, roblox: &Arc<Roblox>, _now: f64) {
@@ -314,6 +356,15 @@ fn set_style(roblox: &Arc<Roblox>, highlight: &Instance, fill: f32, outline: f32
 /// Roblox's fields are transparency (0 = fully opaque, 1 = invisible).
 fn engine_transparency(opacity: f64) -> f32 {
     1.0 - opacity.clamp(0.0, 1.0) as f32
+}
+
+/// The settings that decide what the engine objects look like.
+fn settings_from(values: &Value) -> (f32, f32, bool) {
+    (
+        engine_transparency(number(values, "fill_opacity", 0.5)),
+        engine_transparency(number(values, "outline_opacity", 1.0)),
+        boolean(values, "highlight_local", false),
+    )
 }
 
 pub fn default_values() -> Value {
@@ -407,6 +458,20 @@ mod tests {
         assert!(
             esp.highlights.lock().contains_key(&local_character),
             "toggle on did not re-add the local highlight"
+        );
+
+        // Slider release path (`on_values`): changing the style must rebuild
+        // the engine objects, and the new opacity must be baked into them.
+        let before = esp.highlights.lock().get(&local_character).copied();
+        values["fill_opacity"] = json!(0.15);
+        esp.on_values(&roblox, &values);
+        let after = esp.highlights.lock().get(&local_character).copied();
+        let fill = after.map(|address| memory.read_float(address + highlight.fill_transparency));
+        println!("style change: local {before:?} -> {after:?} (fill transparency {fill:?})");
+        assert!(after.is_some(), "style change removed the local highlight");
+        assert!(
+            (fill.unwrap() - 0.85).abs() < 0.01,
+            "style change did not apply: {fill:?}"
         );
 
         std::thread::sleep(Duration::from_secs(2));

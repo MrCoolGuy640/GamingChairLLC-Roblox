@@ -18,6 +18,10 @@
 // the typed value is used as-is (floored at 0) while the track and fill stay
 // clamped to min/max. Used by Fling Speed so 100000 is allowed even though the
 // slider stops at 2000.
+//
+// `data-commit-on-release` keeps a drag visual-only: onChange fires once when
+// the thumb is released instead of on every pixel. Used where applying a value
+// is expensive (the ESP rebuilds its Highlight objects to change their style).
 // ---------------------------------------------
 function wireSliderControl(control, { onChange } = {}) {
   const slider = control.querySelector(".slider");
@@ -28,6 +32,7 @@ function wireSliderControl(control, { onChange } = {}) {
   const max = parseFloat(slider.max) || 100;
   const step = parseFloat(slider.step) || 1;
   const freeInput = control.hasAttribute("data-free-input");
+  const commitOnRelease = control.hasAttribute("data-commit-on-release");
 
   // What the track and its fill show: always inside the slider's own range.
   function clampToRange(v) {
@@ -69,6 +74,18 @@ function wireSliderControl(control, { onChange } = {}) {
 
   // Dragging the slider
   slider.addEventListener("input", () => {
+    const v = normalize(parseFloat(slider.value));
+    if (v === null) return;
+    value = v;
+    input.value = v;
+    paintFill(v);
+    if (!commitOnRelease && onChange) onChange(v);
+  });
+
+  // Released the thumb. Only commit-on-release controls notify here; the
+  // others already fired during `input`.
+  slider.addEventListener("change", () => {
+    if (!commitOnRelease) return;
     const v = normalize(parseFloat(slider.value));
     if (v === null) return;
     value = v;
